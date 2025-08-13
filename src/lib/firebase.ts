@@ -22,6 +22,13 @@ const validateFirebaseConfig = () => {
     console.warn('Missing Firebase configuration fields:', missingFields);
     return false;
   }
+
+  // Validate API key format
+  if (firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith('AIza')) {
+    console.warn('Firebase API key appears to be invalid format');
+    return false;
+  }
+
   return true;
 };
 
@@ -30,15 +37,40 @@ let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 
 if (typeof window !== 'undefined' && validateFirebaseConfig()) {
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
+  try {
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+      console.log('Firebase app initialized successfully');
+    } else {
+      app = getApp();
+      console.log('Firebase app already initialized');
+    }
+    auth = getAuth(app);
+    console.log('Firebase auth initialized successfully');
+  } catch (error) {
+    console.error('Firebase initialization failed:', error);
+    app = undefined;
+    auth = undefined;
   }
-  auth = getAuth(app);
 } else if (typeof window === 'undefined') {
   // Server-side: create a minimal config to avoid errors
   console.log('Firebase initialization skipped on server-side');
+} else {
+  console.error('Firebase configuration is invalid or incomplete');
 }
 
 export { app, auth };
+
+// Utility function to check if Firebase is ready
+export const isFirebaseReady = (): boolean => {
+  return !!auth && !!app;
+};
+
+// Utility function to get auth with error handling
+export const getAuthInstance = (): Auth | null => {
+  if (!auth) {
+    console.error('Firebase auth is not initialized');
+    return null;
+  }
+  return auth;
+};

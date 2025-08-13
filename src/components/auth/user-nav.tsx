@@ -23,9 +23,17 @@ export function UserNav() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    router.push('/');
-    router.refresh();
+    if (!auth) {
+      console.error('Authentication service is not available');
+      return;
+    }
+    try {
+      await signOut(auth);
+      router.push('/');
+      router.refresh();
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
   };
 
   if (!user) {

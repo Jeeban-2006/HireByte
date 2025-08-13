@@ -70,6 +70,9 @@ export function LoginForm() {
   const onLoginSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
+      if (!auth) {
+        throw new Error('Authentication service is not available. Please refresh the page.');
+      }
       await signInWithEmailAndPassword(auth, data.email, data.password);
       // Redirect handled by auth context
     } catch (error: any) {
@@ -89,6 +92,9 @@ export function LoginForm() {
   const onResetSubmit = async (data: ResetFormValues) => {
     setIsResetLoading(true);
     try {
+        if (!auth) {
+          throw new Error('Authentication service is not available. Please refresh the page.');
+        }
         await sendPasswordResetEmail(auth, data.resetEmail);
         toast({
             title: "Password Reset Email Sent",
