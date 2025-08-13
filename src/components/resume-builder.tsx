@@ -15,7 +15,7 @@ import type { AtsScoreResumeOutput } from "@/ai/flows/ats-score-resume";
 import { cn } from "@/lib/utils";
 
 const SpeechRecognition =
-  (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
+  (typeof window !== 'undefined' && ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
 
 interface ResumeBuilderProps {
   resumeData: Resume;
@@ -37,6 +37,7 @@ export function ResumeBuilder({
   atsResult,
 }: ResumeBuilderProps) {
   const [isListening, setIsListening] = useState<string | null>(null);
+  const [skillsInputValue, setSkillsInputValue] = useState<string>("");
   const recognitionRef = useRef<any>(null);
   const fieldCacheRef = useRef<Record<string, string>>({});
   const activeFieldRef = useRef<string | null>(null);
@@ -44,6 +45,19 @@ export function ResumeBuilder({
   useEffect(() => {
     activeFieldRef.current = isListening;
   }, [isListening]);
+
+  // Initialize skills input value from resumeData
+  useEffect(() => {
+    if (resumeData.skills && resumeData.skills.length > 0) {
+      // If skills is an array of actual skills, join them
+      if (resumeData.skills.length > 1 || !resumeData.skills[0].includes(',')) {
+        setSkillsInputValue(resumeData.skills.join(", "));
+      } else {
+        // If skills contains raw input value
+        setSkillsInputValue(resumeData.skills[0] || "");
+      }
+    }
+  }, [resumeData.skills]);
 
 
   const getFieldValue = useCallback((field: string): string => {
@@ -55,11 +69,11 @@ export function ResumeBuilder({
         case 'summary': return resumeData.summary;
         case 'experience': return index !== -1 ? resumeData.experience[index].description : "";
         case 'project': return index !== -1 && resumeData.projects ? resumeData.projects[index].description : "";
-        case 'skills': return (resumeData.skills || []).join(", ");
+        case 'skills': return skillsInputValue;
         case 'jobDescription': return jobDescription;
         default: return "";
     }
-  }, [resumeData, jobDescription]);
+  }, [resumeData, jobDescription, skillsInputValue]);
 
   const updateField = useCallback((field: string | null, newText: string) => {
     if (!field) return;
@@ -67,40 +81,37 @@ export function ResumeBuilder({
     const [fieldName, indexStr] = field.split('-');
     const index = indexStr ? parseInt(indexStr, 10) : -1;
 
-    setResumeData(currentData => {
-        const newResumeData = { ...currentData };
-        switch (fieldName) {
-        case 'summary':
-            newResumeData.summary = newText;
-            break;
-        case 'experience':
-            if (index !== -1) {
-            const newExperience = [...newResumeData.experience];
-            newExperience[index] = { ...newExperience[index], description: newText };
-            newResumeData.experience = newExperience;
-            }
-            break;
-        case 'project':
-            if (index !== -1 && newResumeData.projects) {
-            const newProjects = [...newResumeData.projects];
-            newProjects[index] = { ...newProjects[index], description: newText };
-            newResumeData.projects = newProjects;
-            }
-            break;
-        case 'skills':
-            newResumeData.skills = newText.split(",").map(s => s.trim());
-            break;
-        case 'jobDescription':
-            // This case doesn't modify resumeData, handled separately
-            break;
+    const newResumeData = { ...resumeData };
+    switch (fieldName) {
+    case 'summary':
+        newResumeData.summary = newText;
+        break;
+    case 'experience':
+        if (index !== -1) {
+        const newExperience = [...newResumeData.experience];
+        newExperience[index] = { ...newExperience[index], description: newText };
+        newResumeData.experience = newExperience;
         }
-        return newResumeData;
-    });
-
-    if (fieldName === 'jobDescription') {
+        break;
+    case 'project':
+        if (index !== -1 && newResumeData.projects) {
+        const newProjects = [...newResumeData.projects];
+        newProjects[index] = { ...newProjects[index], description: newText };
+        newResumeData.projects = newProjects;
+        }
+        break;
+    case 'skills':
+        setSkillsInputValue(newText);
+        // Also update the resume data with processed skills
+        newResumeData.skills = newText.split(",").map(s => s.trim()).filter(s => s.length > 0);
+        break;
+    case 'jobDescription':
+        // This case doesn't modify resumeData, handled separately
         setJobDescription(newText);
+        return;
     }
-  }, [setResumeData, setJobDescription]);
+    setResumeData(newResumeData);
+  }, [resumeData, setResumeData, setJobDescription]);
   
   const toggleListening = useCallback((field: string) => {
     if (isListening) {
@@ -241,7 +252,21 @@ export function ResumeBuilder({
   };
 
   const handleSkillsChange = (value: string) => {
-    setResumeData({ ...resumeData, skills: value.split(",").map((s) => s.trim()) });
+    // Update the input value state for immediate UI feedback
+    setSkillsInputValue(value);
+  };
+
+  const handleSkillsBlur = (value: string) => {
+    // Process skills only on blur to avoid interfering with typing
+    const skillsArray = value.split(",").map((s) => s.trim()).filter(s => s.length > 0);
+    setResumeData({ ...resumeData, skills: skillsArray });
+  };
+
+  const handleSkillsKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSkillsBlur(skillsInputValue);
+    }
   };
   
   const handleProjectChange = (index: number, field: string, value: string) => {
@@ -471,7 +496,15 @@ export function ResumeBuilder({
             <AccordionContent className="pt-2">
                 <div className="relative">
                     <Label htmlFor="skills">Skills (comma-separated)</Label>
-                    <Textarea id="skills" value={(resumeData.skills || []).join(", ")} onChange={(e) => handleSkillsChange(e.target.value)} className="pr-10"/>
+                    <Textarea 
+                      id="skills" 
+                      value={skillsInputValue} 
+                      onChange={(e) => handleSkillsChange(e.target.value)}
+                      onBlur={(e) => handleSkillsBlur(e.target.value)}
+                      onKeyDown={handleSkillsKeyDown}
+                      className="pr-10"
+                      placeholder="e.g., JavaScript, React, Node.js, Python"
+                    />
                      <div className="absolute bottom-1.5 right-1.5 flex flex-col gap-1">
                         {SpeechRecognition && (
                             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground transition-colors hover:text-primary" onClick={() => toggleListening('skills')}>
