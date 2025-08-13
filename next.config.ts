@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Configuration for Netlify deployment
+  serverExternalPackages: ['@genkit-ai/googleai', 'genkit'],
   images: {
     remotePatterns: [
       {
