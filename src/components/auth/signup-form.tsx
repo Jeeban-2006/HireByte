@@ -53,6 +53,9 @@ export function SignUpForm() {
   const onSubmit = async (data: SignUpFormValues) => {
     setIsLoading(true);
     try {
+      if (!auth) {
+        throw new Error('Authentication service is not available. Please refresh the page.');
+      }
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, {
         displayName: data.name,
