@@ -46,7 +46,7 @@ export function ResumeBuilder({
     activeFieldRef.current = isListening;
   }, [isListening]);
   
-  const updateField = (field: string | null, newText: string, isFinal: boolean) => {
+  const updateField = (field: string | null, newText: string) => {
     if (!field) return;
 
     const [fieldName, indexStr] = field.split('-');
@@ -76,10 +76,6 @@ export function ResumeBuilder({
       case 'jobDescription':
         setJobDescription(newText);
         break;
-    }
-
-    if (isFinal) {
-      delete fieldCacheRef.current[field];
     }
   };
   
@@ -126,13 +122,18 @@ export function ResumeBuilder({
       }
       
       const newText = originalText + finalTranscript + interimTranscript;
-      updateField(activeField, newText, !!finalTranscript);
-      if (finalTranscript) {
-          fieldCacheRef.current[activeField] = originalText + finalTranscript;
+      updateField(activeField, newText);
+      
+      if (finalTranscript.trim()) {
+        const updatedCacheText = (originalText + finalTranscript).trim() + ' ';
+        fieldCacheRef.current[activeField] = updatedCacheText;
       }
     };
     
     recognition.onend = () => {
+      if (activeFieldRef.current) {
+         delete fieldCacheRef.current[activeFieldRef.current];
+      }
       setIsListening(null);
     };
     
