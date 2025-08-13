@@ -43,12 +43,10 @@ export function checkApiConfig(): ApiConfigStatus {
  * Get user-friendly error message for missing API configuration
  */
 export function getApiConfigErrorMessage(): string | null {
-  const status = checkApiConfig();
-  
-  if (status.allConfigured) {
-    return null;
+  // Only check for Google AI API key in development
+  if (!process.env.GOOGLE_GENAI_API_KEY) {
+    return "Missing Google AI API key. Please add GOOGLE_GENAI_API_KEY to your .env.local file. Check the API_SETUP.md file for setup instructions.";
   }
 
-  const missing = status.missingConfigs.join(', ');
-  return `Missing API configuration: ${missing}. Please check the API_SETUP.md file for setup instructions.`;
+  return null;
 }
