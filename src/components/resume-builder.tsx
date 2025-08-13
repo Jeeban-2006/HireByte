@@ -67,37 +67,40 @@ export function ResumeBuilder({
     const [fieldName, indexStr] = field.split('-');
     const index = indexStr ? parseInt(indexStr, 10) : -1;
 
-    // Create a new resume data object to ensure state updates correctly
-    const newResumeData = { ...resumeData };
+    setResumeData(currentData => {
+        const newResumeData = { ...currentData };
+        switch (fieldName) {
+        case 'summary':
+            newResumeData.summary = newText;
+            break;
+        case 'experience':
+            if (index !== -1) {
+            const newExperience = [...newResumeData.experience];
+            newExperience[index] = { ...newExperience[index], description: newText };
+            newResumeData.experience = newExperience;
+            }
+            break;
+        case 'project':
+            if (index !== -1 && newResumeData.projects) {
+            const newProjects = [...newResumeData.projects];
+            newProjects[index] = { ...newProjects[index], description: newText };
+            newResumeData.projects = newProjects;
+            }
+            break;
+        case 'skills':
+            newResumeData.skills = newText.split(",").map(s => s.trim());
+            break;
+        case 'jobDescription':
+            // This case doesn't modify resumeData, handled separately
+            break;
+        }
+        return newResumeData;
+    });
 
-    switch (fieldName) {
-      case 'summary':
-        newResumeData.summary = newText;
-        break;
-      case 'experience':
-        if (index !== -1) {
-          const newExperience = [...newResumeData.experience];
-          newExperience[index] = { ...newExperience[index], description: newText };
-          newResumeData.experience = newExperience;
-        }
-        break;
-      case 'project':
-         if (index !== -1 && newResumeData.projects) {
-          const newProjects = [...newResumeData.projects];
-          newProjects[index] = { ...newProjects[index], description: newText };
-          newResumeData.projects = newProjects;
-        }
-        break;
-      case 'skills':
-        newResumeData.skills = newText.split(",").map(s => s.trim());
-        break;
-      case 'jobDescription':
+    if (fieldName === 'jobDescription') {
         setJobDescription(newText);
-        // This case doesn't modify resumeData, so we can return early
-        return;
     }
-    setResumeData(newResumeData);
-  }, [resumeData, setResumeData, setJobDescription]);
+  }, [setResumeData, setJobDescription]);
   
   const toggleListening = useCallback((field: string) => {
     if (isListening) {
@@ -105,7 +108,6 @@ export function ResumeBuilder({
       return;
     }
 
-    // Always get the fresh value right before starting
     const currentText = getFieldValue(field);
     fieldCacheRef.current[field] = currentText ? currentText.trim() + " " : "";
 
@@ -114,7 +116,6 @@ export function ResumeBuilder({
         recognitionRef.current?.start();
     } catch (e) {
         console.error("Error starting speech recognition:", e);
-        // Clean up on error
         if (activeFieldRef.current) {
           delete fieldCacheRef.current[activeFieldRef.current];
         }
@@ -159,7 +160,6 @@ export function ResumeBuilder({
     };
     
     recognition.onend = () => {
-      // Clean up cache for the field that was just being listened to
       if (activeFieldRef.current) {
          delete fieldCacheRef.current[activeFieldRef.current];
       }
@@ -168,22 +168,18 @@ export function ResumeBuilder({
     
     recognition.onerror = (event: any) => {
       if (event.error === 'aborted' || event.error === 'no-speech') {
-        // These are not critical errors, just ignore them.
         return;
       }
       console.error("Speech recognition error", event.error);
-      if (isListening) {
-        setIsListening(null);
-      }
+      setIsListening(null);
     };
 
     recognitionRef.current = recognition;
     
-    // Cleanup function to abort recognition when the component unmounts
     return () => {
         recognitionRef.current?.abort();
     }
-  }, [updateField, isListening]); // Add dependencies
+  }, [updateField]);
 
 
   const handlePersonalInfoChange = (field: string, value: string) => {
@@ -586,5 +582,3 @@ export function ResumeBuilder({
     </Card>
   );
 }
-
-    
