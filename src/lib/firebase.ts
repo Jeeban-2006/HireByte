@@ -1,7 +1,6 @@
 
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
 
 // Your web app's Firebase configuration using environment variables
 const firebaseConfig = {
@@ -14,14 +13,32 @@ const firebaseConfig = {
   measurementId: "", // Optional, can be added if needed
 };
 
-// Initialize Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApp();
-}
+// Validate Firebase configuration
+const validateFirebaseConfig = () => {
+  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+  const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
+  
+  if (missingFields.length > 0) {
+    console.warn('Missing Firebase configuration fields:', missingFields);
+    return false;
+  }
+  return true;
+};
 
-const auth = getAuth(app);
+// Initialize Firebase only if we have valid configuration and we're in the browser
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+
+if (typeof window !== 'undefined' && validateFirebaseConfig()) {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
+  auth = getAuth(app);
+} else if (typeof window === 'undefined') {
+  // Server-side: create a minimal config to avoid errors
+  console.log('Firebase initialization skipped on server-side');
+}
 
 export { app, auth };

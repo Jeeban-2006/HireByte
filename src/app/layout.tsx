@@ -2,7 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { ThemeProvider } from '@/components/theme-provider';
-import { AuthProvider } from '@/context/auth-context';
+import { ClientAuthProvider } from '@/components/client-auth-provider';
 
 export const metadata: Metadata = {
   title: 'HireByte',
@@ -28,10 +28,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
+          <ClientAuthProvider>
             {children}
             <Toaster />
-          </AuthProvider>
+          </ClientAuthProvider>
         </ThemeProvider>
       </body>
     </html>
