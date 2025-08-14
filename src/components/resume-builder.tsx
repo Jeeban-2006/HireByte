@@ -241,7 +241,7 @@ export function ResumeBuilder({
       ...resumeData,
       education: [
         ...(resumeData.education || []),
-        { id: crypto.randomUUID(), school: "", degree: "", location: "", graduationDate: "" },
+        { id: crypto.randomUUID(), school: "", degree: "", location: "", graduationDate: "", grade: "" },
       ],
     });
   };
@@ -395,8 +395,9 @@ export function ResumeBuilder({
                 <div><Label htmlFor="email">Email</Label><Input id="email" type="email" value={resumeData.personalInfo.email} onChange={(e) => handlePersonalInfoChange("email", e.target.value)} /></div>
                 <div><Label htmlFor="phone">Phone</Label><Input id="phone" value={resumeData.personalInfo.phone} onChange={(e) => handlePersonalInfoChange("phone", e.target.value)} /></div>
                 <div><Label htmlFor="address">Address</Label><Input id="address" value={resumeData.personalInfo.address} onChange={(e) => handlePersonalInfoChange("address", e.target.value)} /></div>
-                <div><Label htmlFor="linkedin">LinkedIn Profile</Label><Input id="linkedin" value={resumeData.personalInfo.linkedin} onChange={(e) => handlePersonalInfoChange("linkedin", e.target.value)} /></div>
-                <div><Label htmlFor="portfolio">Portfolio/Website</Label><Input id="portfolio" value={resumeData.personalInfo.portfolio} onChange={(e) => handlePersonalInfoChange("portfolio", e.target.value)} /></div>
+                <div><Label htmlFor="linkedin">LinkedIn Profile</Label><Input id="linkedin" value={resumeData.personalInfo.linkedin} onChange={(e) => handlePersonalInfoChange("linkedin", e.target.value)} placeholder="https://linkedin.com/in/yourusername" /></div>
+                <div><Label htmlFor="github">GitHub Profile</Label><Input id="github" value={resumeData.personalInfo.github || ""} onChange={(e) => handlePersonalInfoChange("github", e.target.value)} placeholder="https://github.com/yourusername" /></div>
+                <div><Label htmlFor="portfolio">Portfolio/Website</Label><Input id="portfolio" value={resumeData.personalInfo.portfolio} onChange={(e) => handlePersonalInfoChange("portfolio", e.target.value)} placeholder="https://yourwebsite.com" /></div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -458,6 +459,7 @@ export function ResumeBuilder({
                     <div><Label>Degree & Major</Label><Input value={edu.degree} onChange={(e) => handleEducationChange(index, "degree", e.target.value)} /></div>
                     <div><Label>Location</Label><Input value={edu.location} onChange={(e) => handleEducationChange(index, "location", e.target.value)} /></div>
                     <div><Label>Graduation Date</Label><Input value={edu.graduationDate} onChange={(e) => handleEducationChange(index, "graduationDate", e.target.value)} /></div>
+                    <div><Label>CGPA/Percentage</Label><Input value={edu.grade || ""} onChange={(e) => handleEducationChange(index, "grade", e.target.value)} placeholder="e.g., 3.8/4.0 or 85%" /></div>
                   </div>
                   <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-muted-foreground transition-colors hover:text-destructive" onClick={() => removeEducation(index)}><Trash2 className="h-4 w-4" /></Button>
                 </div>

@@ -7,6 +7,7 @@ export const initialResumeData: Resume = {
     phone: "(123) 456-7890",
     address: "San Francisco, CA",
     linkedin: "linkedin.com/in/alexdoe",
+    github: "github.com/alexdoe",
     portfolio: "alexdoe.dev",
   },
   summary:
@@ -42,6 +43,7 @@ export const initialResumeData: Resume = {
       degree: "Bachelor of Science in Computer Science",
       location: "San Jose, CA",
       graduationDate: "May 2018",
+      grade: "3.8/4.0",
     },
   ],
   skills: [

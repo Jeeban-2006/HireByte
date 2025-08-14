@@ -6,6 +6,7 @@ export interface PersonalInfo {
   address: string;
   linkedin: string;
   portfolio: string;
+  github: string;
 }
 
 export interface Experience {
@@ -24,6 +25,7 @@ export interface Education {
   degree: string;
   location: string;
   graduationDate: string;
+  grade: string; // Can store CGPA (e.g. "3.8/4.0") or percentage (e.g. "85%")
 }
 
 export interface Project {
