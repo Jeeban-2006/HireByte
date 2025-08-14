@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Resume } from "@/lib/types";
-import { Download, Mail, Phone, Linkedin, Globe, MapPin, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { Download, Mail, Phone, Linkedin, Globe, MapPin, ExternalLink, Link as LinkIcon, Github } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ResumePreviewProps {
@@ -68,8 +68,9 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
               {resumeData.personalInfo.address && <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3" /> {resumeData.personalInfo.address}</span>}
               {resumeData.personalInfo.email && <a href={`mailto:${resumeData.personalInfo.email}`} className="flex items-center gap-1.5 hover:text-primary transition-colors break-all"><Mail className="h-3 w-3" /> {resumeData.personalInfo.email}</a>}
               {resumeData.personalInfo.phone && <a href={`tel:${resumeData.personalInfo.phone}`} className="flex items-center gap-1.5 hover:text-primary transition-colors"><Phone className="h-3 w-3" /> {resumeData.personalInfo.phone}</a>}
-              {resumeData.personalInfo.linkedin && <a href={ensureUrlScheme(resumeData.personalInfo.linkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors"><Linkedin className="h-3 w-3" /> {resumeData.personalInfo.linkedin.replace(/^https?:\/\/(www\.)?/i, '')}</a>}
-              {resumeData.personalInfo.portfolio && <a href={ensureUrlScheme(resumeData.personalInfo.portfolio)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors"><Globe className="h-3 w-3" /> {resumeData.personalInfo.portfolio.replace(/^https?:\/\/(www\.)?/i, '')}</a>}
+              {resumeData.personalInfo.linkedin && <a href={ensureUrlScheme(resumeData.personalInfo.linkedin)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors"><Linkedin className="h-3 w-3" /> LinkedIn</a>}
+              {resumeData.personalInfo.github && <a href={ensureUrlScheme(resumeData.personalInfo.github)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors"><Github className="h-3 w-3" /> GitHub</a>}
+              {resumeData.personalInfo.portfolio && <a href={ensureUrlScheme(resumeData.personalInfo.portfolio)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:text-primary transition-colors"><Globe className="h-3 w-3" /> Portfolio</a>}
             </div>
           </header>
 
@@ -103,7 +104,7 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
                   <h3 className="font-semibold">{proj.name}</h3>
                   {proj.link && (
                       <a href={ensureUrlScheme(proj.link)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1 transition-colors">
-                        Live Demo <ExternalLink className="h-3 w-3" />
+                        View Project <ExternalLink className="h-3 w-3" />
                     </a>
                   )}
                 </div>
@@ -118,7 +119,14 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
                   <span className="text-xs text-muted-foreground">{edu.graduationDate}</span>
                 </div>
                 <div className="flex justify-between items-baseline text-muted-foreground">
-                  <p className="italic">{edu.degree}</p>
+                  <div>
+                    <p className="italic">{edu.degree}</p>
+                    {edu.grade && (
+                      <p className="text-xs mt-1">
+                        <span className="font-medium">Grade:</span> {edu.grade}
+                      </p>
+                    )}
+                  </div>
                   <p className="italic text-xs">{edu.location}</p>
                 </div>
               </div>
@@ -131,7 +139,7 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
                            <h3 className="font-semibold">{cert.name}</h3>
                             {cert.link && (
                                 <a href={ensureUrlScheme(cert.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 transition-colors">
-                                    <LinkIcon className="h-3 w-3" />
+                                    <LinkIcon className="h-3 w-3" /> View
                                 </a>
                             )}
                         </div>
@@ -146,7 +154,7 @@ export function ResumePreview({ resumeData }: ResumePreviewProps) {
                     <span>{award.name}</span>
                     {award.link && (
                         <a href={ensureUrlScheme(award.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 transition-colors">
-                            <LinkIcon className="h-3 w-3" />
+                            <LinkIcon className="h-3 w-3" /> View
                         </a>
                     )}
                 </li>
