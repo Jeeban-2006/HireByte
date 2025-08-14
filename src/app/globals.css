@@ -240,8 +240,15 @@ body {
     print-color-adjust: exact;
   }
   #resume-preview a {
-    color: #000 !important;
-    text-decoration: none;
+    color: #0563C1 !important;
+    text-decoration: underline !important;
+    -webkit-text-decoration-color: #0563C1 !important;
+    text-decoration-color: #0563C1 !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    background: transparent !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   #resume-preview h2 {
     color: #000 !important;
@@ -249,6 +256,21 @@ body {
   }
   #resume-preview .bg-primary\/10 {
     background-color: transparent !important;
+  }
+  /* Skills display for print */
+  .screen-skills-display {
+    display: flex !important;
+  }
+  .print-skills-display {
+    display: none !important;
+  }
+  @media print {
+    .screen-skills-display {
+      display: none !important;
+    }
+    .print-skills-display {
+      display: block !important;
+    }
   }
   .no-print {
     display: none !important;
