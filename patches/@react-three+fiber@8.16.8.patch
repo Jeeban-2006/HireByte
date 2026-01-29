@@ -1,0 +1,29 @@
+diff --git a/node_modules/@react-three/fiber/dist/index.mjs b/node_modules/@react-three/fiber/dist/index.mjs
+index 92a7e71..a451d6c 100644
+--- a/node_modules/@react-three/fiber/dist/index.mjs
++++ b/node_modules/@react-three/fiber/dist/index.mjs
+@@ -10,7 +10,13 @@
+ import * as import_react_dom from 'react-dom';
+ import * as import_react_dom_client from 'react-dom/client';
+ import * as import_scheduler from 'scheduler';
+-var import_react = __toESM(require("react"));
++var import_react = __toESM(require("react"), 1);
++
++// src/native/Canvas.tsx
++var React2 = __toESM(require("react"));
++
++// src/web/Canvas.tsx
++var React4 = __toESM(require("react"));
+ 
+ // src/core/utils.ts
+ function isRef(obj) {
+@@ -370,7 +376,7 @@
+     return newInstance;
+   }
+ };
+-var reconciler = (0, import_react_reconciler.default)(hostConfig);
++var reconciler = (0, import_react_reconciler.default)({ ...hostConfig, isPrimaryRenderer: false, supportsMutation: true });
+ var act = (callback) => {
+   const roots = Object.values(roots_default).map((root) => root.container);
+   if (roots.length > 0) {
+

@@ -1,0 +1,43 @@
+# Robots.txt for HireByte - AI Resume Builder
+# Updated: 2026-01-28
+
+# All bots allowed with specific rules
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://hirebyte.netlify.app/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 0.5
+
+# Block access to API endpoints and build files
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+
+# Allow important pages for better indexing
+Allow: /resume-parser
+Allow: /mic-test
+Allow: /*.js
+Allow: /*.css
+
+# Google specific rules
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing specific rules
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0.5
+
+# Block specific file types that shouldn't be indexed
+Disallow: *.json$
+Disallow: *.xml$ 
+Disallow: *.txt$
+
+# Allow crawling of important assets
+Allow: /favicon.ico
+Allow: /sitemap.xml
+Allow: /robots.txt

@@ -1,0 +1,413 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 220 14% 96%; /* #F2F4F7 - Light Mode */
+    --foreground: 224 10% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 10% 12%;
+    --primary: 211 74% 58%; /* #4A90E2 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 170 68% 63%; /* #50E3C2 */
+    --accent-foreground: 224 10% 12%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 211 74% 58%;
+    --chart-1: 211 74% 58%;
+    --chart-2: 170 68% 63%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 220 29% 8%; /* #0A0F1C - Dark Navy */
+    --foreground: 0 0% 98%;
+    --card: 220 29% 10%;
+    --card-foreground: 0 0% 98%;
+    --popover: 220 29% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 211 74% 58%; /* #4A90E2 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 170 68% 63%; /* #50E3C2 */
+    --accent-foreground: 224 10% 12%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 25%;
+    --input: 0 0% 25%;
+    --ring: 211 74% 58%;
+    --chart-1: 211 74% 58%;
+    --chart-2: 170 68% 63%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  /* Add a transition for a smoother dark mode toggle */
+  body, html {
+    @apply transition-colors duration-300;
+  }
+}
+
+@layer utilities {
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+  
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  .animate-draw {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: draw 2s ease-in-out forwards;
+  }
+
+  @keyframes rotate-loader {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .animate-rotate-loader {
+    animation: rotate-loader 1.5s linear infinite;
+  }
+
+  @keyframes dash-loader {
+    0% { stroke-dasharray: 1, 200; stroke-dashoffset: 0; }
+    50% { stroke-dasharray: 89, 200; stroke-dashoffset: -35px; }
+    100% { stroke-dasharray: 89, 200; stroke-dashoffset: -124px; }
+  }
+  .animate-dash-loader {
+    animation: dash-loader 1.5s ease-in-out infinite;
+  }
+
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+  .animate-typewriter {
+    animation: typewriter 2s steps(8, end);
+    animation-delay: 1.5s;
+    animation-fill-mode: forwards;
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent; }
+    50% { border-color: hsl(var(--accent)); }
+  }
+  .animate-blink-caret {
+    animation: blink-caret 0.75s step-end infinite;
+    animation-delay: 1.5s;
+    animation-fill-mode: forwards;
+  }
+  
+  @keyframes scanline {
+    0% {
+      transform: translateY(-100%) scaleY(1);
+    }
+    15% {
+      transform: translateY(0) scaleY(4);
+      opacity: 0.8;
+    }
+    70% {
+      transform: translateY(100%) scaleY(1);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(100%) scaleY(1);
+      opacity: 0;
+    }
+  }
+
+  .animate-scanline::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: hsl(var(--accent) / 0.5);
+    box-shadow: 0 0 5px hsl(var(--accent)), 0 0 10px hsl(var(--accent));
+    animation: scanline 2.5s cubic-bezier(0.2, 0.6, 0.7, 1) forwards;
+    animation-delay: 3.5s;
+    opacity: 0;
+  }
+   @keyframes pulse-mic {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.75;
+    }
+  }
+
+  .animate-pulse-mic {
+    animation: pulse-mic 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+
+@page {
+  size: landscape;
+  margin: 0.2in;
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0.3in 0.25in;
+}
+
+@media print {
+  * {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  html, body {
+    width: 100% !important;
+    height: auto !important;
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide all UI elements */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure resume-preview is visible */
+  #resume-preview {
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-after: auto !important;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Show all children of resume-preview */
+  #resume-preview * {
+    display: revert !important;
+    visibility: visible !important;
+    color: inherit !important;
+    background-color: transparent !important;
+    border-color: inherit !important;
+  }
+
+  #resume-preview header {
+    margin-bottom: 0.15in !important;
+    display: block !important;
+  }
+
+  #resume-preview main {
+    display: block !important;
+    font-size: 8.5pt !important;
+  }
+
+  #resume-preview section {
+    display: block !important;
+    margin-bottom: 0.08in !important;
+    page-break-inside: avoid !important;
+  }
+
+  #resume-preview h1, #resume-preview h2, #resume-preview h3 {
+    display: block !important;
+    color: #000 !important;
+  }
+
+  #resume-preview h2 {
+    border-bottom: 1px solid #000 !important;
+    font-size: 8.5pt !important;
+    margin: 0 0 0.03in 0 !important;
+    padding: 0 0 0.02in 0 !important;
+    font-weight: bold !important;
+  }
+
+  #resume-preview h3 {
+    font-size: 8.5pt !important;
+    margin: 0 0 0.02in 0 !important;
+    font-weight: bold !important;
+  }
+
+  #resume-preview p {
+    display: block !important;
+    font-size: 8.5pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  #resume-preview ul, #resume-preview ol {
+    display: block !important;
+    margin: 0.03in 0 !important;
+    padding-left: 0.15in !important;
+  }
+
+  #resume-preview li {
+    display: list-item !important;
+    font-size: 8.5pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.15 !important;
+  }
+
+  #resume-preview a {
+    color: inherit !important;
+    text-decoration: underline !important;
+  }
+
+  #resume-preview div {
+    display: block !important;
+  }
+
+  #resume-preview span {
+    display: inline !important;
+  }
+}
+
+/* Smooth scroll and enhanced animations */
+html {
+  scroll-behavior: smooth;
+}
+
+@layer utilities {
+  /* Grid background pattern */
+  .bg-grid-pattern {
+    background-image: 
+      linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  /* Section transitions */
+  .section-transition {
+    @apply transition-all duration-700 ease-in-out;
+  }
+  
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Slide in from left */
+  .slide-in-left {
+    animation: slideInLeft 0.8s ease-out;
+  }
+  
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  /* Slide in from right */
+  .slide-in-right {
+    animation: slideInRight 0.8s ease-out;
+  }
+  
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
