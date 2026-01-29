@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import type { Resume } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/general-utils";
 
 const TableRowHeader = ({ children }: { children: React.ReactNode }) => (
   <tr className="divide-x bg-gray-50">
