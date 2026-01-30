@@ -102,7 +102,19 @@ export default {
         'accordion-down': 'accordion-down 0.3s ease-out',
         'accordion-up': 'accordion-up 0.3s ease-out',
       },
+      // Custom screen variants for PDF rendering
+      // Used to separate screen (interactive) vs print (static) rendering
+      screens: {
+        'screen': {'raw': 'screen'}, // @media screen - for screen-only styles
+      },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    // Custom plugin to add screen variant support
+    function({ addVariant }: any) {
+      // 'screen:' variant - only applies on screen, not in print
+      addVariant('screen', '@media screen');
+    }
+  ],
 } satisfies Config;

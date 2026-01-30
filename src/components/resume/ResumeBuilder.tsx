@@ -21,7 +21,7 @@ const SpeechRecognition =
 
 interface ResumeBuilderProps {
   resumeData: Resume;
-  setResumeData: (data: Resume) => void;
+  setResumeData: (data: Resume | ((prevData: Resume) => Resume)) => void;
   jobDescription: string;
   setJobDescription: (desc: string) => void;
   handleScore: () => void;
@@ -124,8 +124,8 @@ export function ResumeBuilder({
       return;
     }
 
-    setResumeData(prevData => {
-      const newResumeData = { ...prevData };
+    setResumeData((prevData: Resume) => {
+      const newResumeData: Resume = { ...prevData };
       switch (fieldName) {
       case 'summary':
           newResumeData.summary = newText;
@@ -134,15 +134,15 @@ export function ResumeBuilder({
       case 'skills':
           setSkillsInputValue(newText);
           // Also update the resume data with processed skills
-          newResumeData.skills = newText.split(",").map(s => s.trim()).filter(s => s.length > 0);
+          newResumeData.skills = newText.split(",").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
           break;
           case 'project':
-            if (index !== -1 && newResumeData.projects) {
-            const newProjects = [...newResumeData.projects];
-            newProjects[index] = { ...newProjects[index], description: newText };
-            newResumeData.projects = newProjects;
-            }
-            break;
+        if (index !== -1 && newResumeData.projects) {
+        const newProjects = [...newResumeData.projects];
+        newProjects[index] = { ...newProjects[index], description: newText };
+        newResumeData.projects = newProjects;
+        }
+        break;
 
       case 'experience':
           if (index !== -1) {
@@ -161,7 +161,7 @@ export function ResumeBuilder({
           break;
       }
       return newResumeData;
-    });
+        });
   }, [setResumeData, setJobDescription]);
 
   const requestMicPermission = async () => {

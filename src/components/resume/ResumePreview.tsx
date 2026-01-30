@@ -350,15 +350,17 @@ const scrollToTop = () => {
       case 'experience':
         return renderSection("Experience", resumeData.experience, (exp) => (
           <div key={exp.id} className="print:page-break-inside-avoid">
-            <div className="flex justify-between items-baseline gap-1">
-              <h3 className="font-bold text-xs">{exp.jobTitle}</h3>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{exp.startDate} - {exp.endDate}</span>
+            {/* Grid layout: PDF-safe, prevents date/location misalignment */}
+            <div className="grid grid-cols-[1fr_auto] items-baseline gap-1">
+              <h3 className="font-bold text-xs print:text-black">{exp.jobTitle}</h3>
+              <span className="text-xs text-muted-foreground print:text-gray-700 whitespace-nowrap">{exp.startDate} - {exp.endDate}</span>
             </div>
-            <div className="flex justify-between items-baseline text-muted-foreground text-xs gap-1">
+            {/* Grid for company + location alignment */}
+            <div className="grid grid-cols-[1fr_auto] items-baseline text-muted-foreground print:text-gray-700 text-xs gap-1">
               <p className="italic">{exp.company}</p>
               <p className="italic text-xs whitespace-nowrap">{exp.location}</p>
             </div>
-            <ul className="list-disc list-inside mt-0.5 text-muted-foreground/90 text-xs leading-tight print:text-black">
+            <ul className="list-disc list-inside mt-0.5 text-muted-foreground/90 print:text-black text-xs leading-tight print:leading-tight">
               {exp.description.split('\n').slice(0, 2).map((line: string, i: number) => line && <li key={i} className="text-xs">{line.replace(/^- /, '')}</li>)}
             </ul>
           </div>
@@ -367,26 +369,34 @@ const scrollToTop = () => {
       case 'projects':
         return renderSection("Projects", resumeData.projects, (proj) => (
           <div key={proj.id} className="print:page-break-inside-avoid">
-            <div className="flex justify-between items-baseline gap-1">
+            {/* Grid layout: PDF-safe, maintains structure in print */}
+            <div className="grid grid-cols-[1fr_auto] items-baseline gap-1">
               <h3 className="font-bold text-xs">{proj.name}</h3>
               {proj.link && (
-                <a href={ensureUrlScheme(proj.link)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-0.5 transition-colors whitespace-nowrap">
-                  View <ExternalLink className="h-2.5 w-2.5" />
-                </a>
+                <>
+                  {/* Screen: Interactive link with icon */}
+                  <a href={ensureUrlScheme(proj.link)} target="_blank" rel="noopener noreferrer" className="screen:inline print:hidden text-xs text-primary hover:underline flex items-center gap-0.5 transition-colors whitespace-nowrap">
+                    View <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                  {/* Print: Clean text only, no URL rendered */}
+                  <span className="screen:hidden print:inline text-xs text-gray-700 whitespace-nowrap">View</span>
+                </>
               )}
             </div>
-            <p className="mt-0 text-muted-foreground/90 text-xs">{proj.description}</p>
+            <p className="mt-0 text-muted-foreground/90 text-xs print:text-black">{proj.description}</p>
           </div>
         ));
       
       case 'education':
         return renderSection("Education", resumeData.education, (edu) => (
           <div key={edu.id} className="print:page-break-inside-avoid">
-            <div className="flex justify-between items-baseline gap-1">
-              <h3 className="font-bold text-xs">{edu.school}</h3>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">{edu.graduationDate}</span>
+            {/* Grid layout: prevents flex issues in PDF, keeps right-alignment stable */}
+            <div className="grid grid-cols-[1fr_auto] items-baseline gap-1">
+              <h3 className="font-bold text-xs print:text-black">{edu.school}</h3>
+              <span className="text-xs text-muted-foreground print:text-gray-700 whitespace-nowrap">{edu.graduationDate}</span>
             </div>
-            <div className="flex justify-between items-baseline text-muted-foreground text-xs gap-1">
+            {/* Grid for degree + location alignment */}
+            <div className="grid grid-cols-[1fr_auto] items-start text-muted-foreground print:text-gray-700 text-xs gap-1">
               <div>
                 <p className="italic text-xs">{edu.degree}</p>
                 {edu.grade && (
@@ -402,43 +412,55 @@ const scrollToTop = () => {
       
       case 'certifications':
         return renderSection("Certifications", resumeData.certifications, (cert) => (
-          <div key={cert.id}>
-            <div className="flex justify-between items-baseline">
+          <div key={cert.id} className="print:page-break-inside-avoid">
+            {/* Grid layout: maintains structure in PDF */}
+            <div className="grid grid-cols-[1fr_auto] items-baseline gap-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold">{cert.name}</h3>
+                <h3 className="font-semibold text-xs print:text-black">{cert.name}</h3>
                 {cert.link && (
-                  <a href={ensureUrlScheme(cert.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 transition-colors">
-                    <LinkIcon className="h-3 w-3" /> View
-                  </a>
+                  <>
+                    {/* Screen: Interactive link */}
+                    <a href={ensureUrlScheme(cert.link)} target="_blank" rel="noopener noreferrer" className="screen:inline print:hidden text-primary hover:underline flex items-center gap-1 transition-colors text-xs">
+                      <LinkIcon className="h-3 w-3" /> View
+                    </a>
+                    {/* Print: Clean text only */}
+                    <span className="screen:hidden print:inline text-xs text-gray-700">- View</span>
+                  </>
                 )}
               </div>
-              <span className="text-xs text-muted-foreground">{cert.date}</span>
+              <span className="text-xs text-muted-foreground print:text-gray-700 whitespace-nowrap">{cert.date}</span>
             </div>
-            <p className="italic text-muted-foreground">{cert.authority}</p>
+            <p className="italic text-muted-foreground print:text-gray-700 text-xs">{cert.authority}</p>
           </div>
         ));
       
       case 'awards':
         return renderSimpleListSection("Awards & Achievements", resumeData.awards, (award) => (
           <span key={award.id} className="flex items-center gap-2">
-            <span>{award.name}</span>
+            <span className="print:text-black">{award.name}</span>
             {award.link && (
-              <a href={ensureUrlScheme(award.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 transition-colors">
-                <LinkIcon className="h-3 w-3" /> View
-              </a>
+              <>
+                {/* Screen: Interactive link */}
+                <a href={ensureUrlScheme(award.link)} target="_blank" rel="noopener noreferrer" className="screen:inline print:hidden text-primary hover:underline flex items-center gap-1 transition-colors text-xs">
+                  <LinkIcon className="h-3 w-3" /> View
+                </a>
+                {/* Print: Clean text only, no URL */}
+                <span className="screen:hidden print:inline text-xs text-gray-700">- View</span>
+              </>
             )}
           </span>
         ));
       
       case 'volunteer':
         return renderSection("Volunteer Experience", resumeData.volunteerExperience, (vol) => (
-          <div key={vol.id}>
-            <div className="flex justify-between items-baseline">
-              <h3 className="font-semibold">{vol.role}</h3>
-              <span className="text-xs text-muted-foreground">{vol.dates}</span>
+          <div key={vol.id} className="print:page-break-inside-avoid">
+            {/* Grid layout: PDF-safe date alignment */}
+            <div className="grid grid-cols-[1fr_auto] items-baseline gap-1">
+              <h3 className="font-semibold text-xs print:text-black">{vol.role}</h3>
+              <span className="text-xs text-muted-foreground print:text-gray-700 whitespace-nowrap">{vol.dates}</span>
             </div>
-            <p className="italic text-muted-foreground">{vol.organization}</p>
-            <p className="mt-1 text-muted-foreground/90">{vol.description}</p>
+            <p className="italic text-muted-foreground print:text-gray-700 text-xs">{vol.organization}</p>
+            <p className="mt-1 text-muted-foreground/90 print:text-black text-xs">{vol.description}</p>
           </div>
         ));
       
@@ -553,34 +575,55 @@ const scrollToTop = () => {
             </a>
           )}
           {resumeData.personalInfo.linkedin && (
-            <a
-              href={ensureUrlScheme(resumeData.personalInfo.linkedin)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-primary transition-colors"
-            >
-              <Linkedin className="h-3 w-3" /> LinkedIn
-            </a>
+            <>
+              {/* Screen: Full interactive link */}
+              <a
+                href={ensureUrlScheme(resumeData.personalInfo.linkedin)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="screen:flex print:hidden items-center gap-1.5 hover:text-primary transition-colors"
+              >
+                <Linkedin className="h-3 w-3" /> LinkedIn
+              </a>
+              {/* Print: Clean text, no URL rendered */}
+              <span className="screen:hidden print:inline-flex items-center gap-1.5 text-gray-700">
+                <Linkedin className="h-3 w-3 print:hidden" />LinkedIn
+              </span>
+            </>
           )}
           {resumeData.personalInfo.github && (
-            <a
-              href={ensureUrlScheme(resumeData.personalInfo.github)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-primary transition-colors"
-            >
-              <Github className="h-3 w-3" /> GitHub
-            </a>
+            <>
+              {/* Screen: Full interactive link */}
+              <a
+                href={ensureUrlScheme(resumeData.personalInfo.github)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="screen:flex print:hidden items-center gap-1.5 hover:text-primary transition-colors"
+              >
+                <Github className="h-3 w-3" /> GitHub
+              </a>
+              {/* Print: Clean text, no URL rendered */}
+              <span className="screen:hidden print:inline-flex items-center gap-1.5 text-gray-700">
+                <Github className="h-3 w-3 print:hidden" />GitHub
+              </span>
+            </>
           )}
           {resumeData.personalInfo.portfolio && (
-            <a
-              href={ensureUrlScheme(resumeData.personalInfo.portfolio)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 hover:text-primary transition-colors"
-            >
-              <Globe className="h-3 w-3" /> Portfolio
-            </a>
+            <>
+              {/* Screen: Full interactive link */}
+              <a
+                href={ensureUrlScheme(resumeData.personalInfo.portfolio)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="screen:flex print:hidden items-center gap-1.5 hover:text-primary transition-colors"
+              >
+                <Globe className="h-3 w-3" /> Portfolio
+              </a>
+              {/* Print: Clean text, no URL rendered */}
+              <span className="screen:hidden print:inline-flex items-center gap-1.5 text-gray-700">
+                <Globe className="h-3 w-3 print:hidden" />Portfolio
+              </span>
+            </>
           )}
         </div>
       </header>
