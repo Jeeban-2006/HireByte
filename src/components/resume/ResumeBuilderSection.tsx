@@ -230,14 +230,6 @@ ${resumeData.skills.join(', ')}
               <Badge variant="outline" className="bg-slate-100 dark:bg-slate-900/60 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                 Professional template
               </Badge>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export PDF
-              </Button>
             </div>
           </div>
 

@@ -232,10 +232,23 @@ export const ResumePDF = memo(function ResumePDF({ resume, sectionOrder }: Resum
         ) : null;
 
       case 'skills':
-        return resume.skills && resume.skills.length > 0 ? (
+        const skillCategories = Array.isArray(resume.skills) && resume.skills.length > 0 && typeof resume.skills[0] === 'object'
+          ? resume.skills as import('@/lib/types/resume-types').SkillCategory[]
+          : [];
+        
+        return skillCategories.length > 0 && skillCategories.some(cat => cat.category && cat.items && cat.items.some(item => item.trim())) ? (
           <View style={styles.section} key="skills" wrap={false}>
             <Text style={styles.sectionTitle}>Skills</Text>
-            <Text style={styles.skillsList}>{resume.skills.join(' • ')}</Text>
+            {skillCategories.map((category, index) => 
+              category.category && category.items && category.items.some(item => item.trim()) ? (
+                <View key={index} style={{ marginBottom: 4 }}>
+                  <Text style={styles.description}>
+                    <Text style={{ fontWeight: 'bold' }}>{category.category}: </Text>
+                    {category.items.filter(item => item.trim()).join(', ')}
+                  </Text>
+                </View>
+              ) : null
+            )}
           </View>
         ) : null;
 
@@ -246,7 +259,13 @@ export const ResumePDF = memo(function ResumePDF({ resume, sectionOrder }: Resum
             {resume.projects.map((proj, index) => (
               <View key={index} style={styles.projectItem}>
                 <Text style={styles.projectName}>{proj.name}</Text>
-                <Text style={styles.description}>{proj.description}</Text>
+                {proj.description && proj.description.length > 0 && (
+                  <View style={{ marginTop: 2 }}>
+                    {proj.description.filter(point => point.trim()).map((point, pointIndex) => (
+                      <Text key={pointIndex} style={styles.description}>• {point}</Text>
+                    ))}
+                  </View>
+                )}
                 {proj.link && (
                   <Link src={proj.link} style={styles.link}>
                     {proj.link}

@@ -219,7 +219,11 @@ export const ResumeDownloadButton = memo(function ResumeDownloadButton({
       }
 
       // Skills
-      if (resumeData.skills && resumeData.skills.length > 0) {
+      const skillCategories = Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object'
+        ? resumeData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+
+      if (skillCategories.length > 0 && skillCategories.some(cat => cat.category && cat.items && cat.items.some(item => item.trim()))) {
         if (yPos > 270) {
           pdf.addPage();
           yPos = 15;
@@ -232,12 +236,38 @@ export const ResumeDownloadButton = memo(function ResumeDownloadButton({
         pdf.line(margin, yPos + 1, pageWidth - margin, yPos + 1);
         yPos += baseSpacing + 1;
         pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        const skillsText = resumeData.skills.filter(s => s).join(', ');
-        const skillsLines = pdf.splitTextToSize(skillsText, contentWidth);
-        skillsLines.forEach((line: string) => {
-          pdf.text(line, margin, yPos);
-          yPos += 5;
+        
+        skillCategories.forEach((category) => {
+          if (category.category && category.items && category.items.some(item => item.trim())) {
+            if (yPos > 280) {
+              pdf.addPage();
+              yPos = 15;
+            }
+            pdf.setFont('helvetica', 'bold');
+            const categoryText = `${category.category}: `;
+            const categoryWidth = pdf.getTextWidth(categoryText);
+            pdf.text(categoryText, margin, yPos);
+            
+            pdf.setFont('helvetica', 'normal');
+            const skillsText = category.items.filter(item => item.trim()).join(', ');
+            const skillsLines = pdf.splitTextToSize(skillsText, contentWidth - categoryWidth);
+            
+            // First line on same line as category
+            if (skillsLines.length > 0) {
+              pdf.text(skillsLines[0], margin + categoryWidth, yPos);
+              yPos += 5;
+              
+              // Remaining lines on new lines
+              for (let i = 1; i < skillsLines.length; i++) {
+                if (yPos > 280) {
+                  pdf.addPage();
+                  yPos = 15;
+                }
+                pdf.text(skillsLines[i], margin, yPos);
+                yPos += 5;
+              }
+            }
+          }
         });
         yPos += sectionGap;
       }
@@ -281,14 +311,17 @@ export const ResumeDownloadButton = memo(function ResumeDownloadButton({
 
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(9);
-          const descLines = pdf.splitTextToSize(proj.description || '', contentWidth);
-          descLines.forEach((line: string) => {
-            if (yPos > 280) {
-              pdf.addPage();
-              yPos = 15;
-            }
-            pdf.text(line, margin, yPos);
-            yPos += 5;
+          const description = Array.isArray(proj.description) ? proj.description : [proj.description];
+          description.filter(point => point && point.trim()).forEach((point: string) => {
+            const descLines = pdf.splitTextToSize(`• ${point}`, contentWidth);
+            descLines.forEach((line: string) => {
+              if (yPos > 280) {
+                pdf.addPage();
+                yPos = 15;
+              }
+              pdf.text(line, margin, yPos);
+              yPos += 5;
+            });
           });
           yPos += index < resumeData.projects.length - 1 ? 4 : sectionGap;
         });

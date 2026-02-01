@@ -31,7 +31,7 @@ export interface Education {
 export interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string[];
   link: string;
 }
 
@@ -63,12 +63,18 @@ export interface Language {
     proficiency: string;
 }
 
+export interface SkillCategory {
+  id: string;
+  category: string;
+  items: string[];
+}
+
 export interface Resume {
   personalInfo: PersonalInfo;
   summary: string;
   experience: Experience[];
   education: Education[];
-  skills: string[];
+  skills: string[] | SkillCategory[];
   projects: Project[];
   certifications: Certification[];
   awards: Award[];

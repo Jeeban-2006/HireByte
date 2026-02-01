@@ -70,7 +70,6 @@ export function ResumeBuilder({
   const { toast } = useToast();
   const [isListening, setIsListening] = useState<string | null>(null);
   const [micPermissionDenied, setMicPermissionDenied] = useState(false);
-  const [skillsInputValue, setSkillsInputValue] = useState<string>("");
   const [hiddenSections, setHiddenSections] = useState<string[]>(resumeData.hiddenSections || []);
   const recognitionRef = useRef<any>(null);
   const fieldCacheRef = useRef<Record<string, string>>({});
@@ -80,18 +79,26 @@ export function ResumeBuilder({
     activeFieldRef.current = isListening;
   }, [isListening]);
 
-  // Initialize skills input value from resumeData
+  // Migrate project descriptions from string to array format
   useEffect(() => {
-    if (resumeData.skills && resumeData.skills.length > 0) {
-      // If skills is an array of actual skills, join them
-      if (resumeData.skills.length > 1 || !resumeData.skills[0].includes(',')) {
-        setSkillsInputValue(resumeData.skills.join(", "));
-      } else {
-        // If skills contains raw input value
-        setSkillsInputValue(resumeData.skills[0] || "");
+    if (resumeData.projects && resumeData.projects.length > 0) {
+      const needsMigration = resumeData.projects.some(
+        proj => typeof (proj as any).description === 'string'
+      );
+      
+      if (needsMigration) {
+        setResumeData(prevData => ({
+          ...prevData,
+          projects: prevData.projects?.map(proj => ({
+            ...proj,
+            description: typeof (proj as any).description === 'string'
+              ? (proj as any).description.trim() ? [(proj as any).description] : [""]
+              : Array.isArray(proj.description) ? proj.description : [""]
+          }))
+        }));
       }
     }
-  }, [resumeData.skills]);
+  }, []);
 
 
   const getFieldValue = useCallback((field: string): string => {
@@ -101,16 +108,15 @@ export function ResumeBuilder({
     
     switch (fieldName) {
         case 'summary': return resumeData.summary;
-        case 'skills': return skillsInputValue;
         
-        case 'project': return index !== -1 && resumeData.projects ? resumeData.projects[index].description : "";
+        case 'project': return index !== -1 && resumeData.projects ? resumeData.projects[index].description.join('\n') : "";
         case 'experience': return index !== -1 ? resumeData.experience[index].description : "";
         case 'volunteer': return index !== -1 && resumeData.volunteerExperience ? resumeData.volunteerExperience[index].description : "";
         
         case 'jobDescription': return jobDescription;
         default: return "";
     }
-  }, [resumeData, jobDescription, skillsInputValue]);
+  }, [resumeData, jobDescription]);
 
   const updateField = useCallback((field: string | null, newText: string) => {
     if (!field) return;
@@ -131,15 +137,11 @@ export function ResumeBuilder({
           newResumeData.summary = newText;
           break;
 
-      case 'skills':
-          setSkillsInputValue(newText);
-          // Also update the resume data with processed skills
-          newResumeData.skills = newText.split(",").map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-          break;
           case 'project':
         if (index !== -1 && newResumeData.projects) {
         const newProjects = [...newResumeData.projects];
-        newProjects[index] = { ...newProjects[index], description: newText };
+        const descriptionArray = newText.split('\n').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+        newProjects[index] = { ...newProjects[index], description: descriptionArray };
         newResumeData.projects = newProjects;
         }
         break;
@@ -357,25 +359,81 @@ export function ResumeBuilder({
     });
   }, [setResumeData]);
 
-  const handleSkillsChange = useCallback((value: string) => {
-    // Update the input value state for immediate UI feedback
-    setSkillsInputValue(value);
-  }, [setSkillsInputValue]);
-
-  const handleSkillsBlur = useCallback((value: string) => {
-    // Process skills only on blur to avoid interfering with typing
-    const skillsArray = value.split(",").map((s) => s.trim()).filter(s => s.length > 0);
-    setResumeData(prevData => ({ ...prevData, skills: skillsArray }));
+  const handleSkillCategoryChange = useCallback((index: number, field: 'category' | 'items', value: string | string[]) => {
+    setResumeData(prevData => {
+      const skills = Array.isArray(prevData.skills) && prevData.skills.length > 0 && typeof prevData.skills[0] === 'object'
+        ? prevData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+      const newSkills = [...skills];
+      newSkills[index] = { ...newSkills[index], [field]: value };
+      return { ...prevData, skills: newSkills };
+    });
   }, [setResumeData]);
 
-  const handleSkillsKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSkillsBlur(skillsInputValue);
-    }
-  }, [handleSkillsBlur, skillsInputValue]);
+  const handleSkillItemChange = useCallback((categoryIndex: number, itemIndex: number, value: string) => {
+    setResumeData(prevData => {
+      const skills = Array.isArray(prevData.skills) && prevData.skills.length > 0 && typeof prevData.skills[0] === 'object'
+        ? prevData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+      const newSkills = [...skills];
+      const newItems = [...(newSkills[categoryIndex].items || [])];
+      newItems[itemIndex] = value;
+      newSkills[categoryIndex] = { ...newSkills[categoryIndex], items: newItems };
+      return { ...prevData, skills: newSkills };
+    });
+  }, [setResumeData]);
+
+  const addSkillCategory = useCallback(() => {
+    setResumeData(prevData => {
+      const skills = Array.isArray(prevData.skills) && prevData.skills.length > 0 && typeof prevData.skills[0] === 'object'
+        ? prevData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+      return {
+        ...prevData,
+        skills: [...skills, { id: crypto.randomUUID(), category: "", items: [""] }],
+      };
+    });
+  }, [setResumeData]);
+
+  const removeSkillCategory = useCallback((index: number) => {
+    setResumeData(prevData => {
+      const skills = Array.isArray(prevData.skills) && prevData.skills.length > 0 && typeof prevData.skills[0] === 'object'
+        ? prevData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+      return { ...prevData, skills: skills.filter((_, i) => i !== index) };
+    });
+  }, [setResumeData]);
+
+  const addSkillItem = useCallback((categoryIndex: number) => {
+    setResumeData(prevData => {
+      const skills = Array.isArray(prevData.skills) && prevData.skills.length > 0 && typeof prevData.skills[0] === 'object'
+        ? prevData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+      const newSkills = [...skills];
+      newSkills[categoryIndex] = {
+        ...newSkills[categoryIndex],
+        items: [...(newSkills[categoryIndex].items || []), ""]
+      };
+      return { ...prevData, skills: newSkills };
+    });
+  }, [setResumeData]);
+
+  const removeSkillItem = useCallback((categoryIndex: number, itemIndex: number) => {
+    setResumeData(prevData => {
+      const skills = Array.isArray(prevData.skills) && prevData.skills.length > 0 && typeof prevData.skills[0] === 'object'
+        ? prevData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+      const newSkills = [...skills];
+      const newItems = newSkills[categoryIndex].items.filter((_, i) => i !== itemIndex);
+      newSkills[categoryIndex] = {
+        ...newSkills[categoryIndex],
+        items: newItems.length > 0 ? newItems : [""]
+      };
+      return { ...prevData, skills: newSkills };
+    });
+  }, [setResumeData]);
   
-  const handleProjectChange = useCallback((index: number, field: string, value: string) => {
+  const handleProjectChange = useCallback((index: number, field: string, value: string | string[]) => {
     setResumeData(prevData => {
       const newProjects = [...(prevData.projects || [])];
       newProjects[index] = { ...newProjects[index], [field]: value };
@@ -388,7 +446,7 @@ export function ResumeBuilder({
       ...prevData,
       projects: [
         ...(prevData.projects || []),
-        { id: crypto.randomUUID(), name: "", description: "", link: "" },
+        { id: crypto.randomUUID(), name: "", description: [""], link: "" },
       ],
     }));
   }, [setResumeData]);
@@ -399,6 +457,45 @@ export function ResumeBuilder({
       return { ...prevData, projects: newProjects };
     });
   }, [setResumeData]);
+
+  const handleProjectDescriptionPointChange = useCallback((projectIndex: number, pointIndex: number, value: string) => {
+    setResumeData(prevData => {
+      const newProjects = [...(prevData.projects || [])];
+      const newDescription = [...(newProjects[projectIndex].description || [])];
+      newDescription[pointIndex] = value;
+      newProjects[projectIndex] = { ...newProjects[projectIndex], description: newDescription };
+      return { ...prevData, projects: newProjects };
+    });
+  }, [setResumeData]);
+
+  const addProjectDescriptionPoint = useCallback((projectIndex: number) => {
+    setResumeData(prevData => {
+      const newProjects = [...(prevData.projects || [])];
+      const newDescription = [...(newProjects[projectIndex].description || []), ""];
+      newProjects[projectIndex] = { ...newProjects[projectIndex], description: newDescription };
+      return { ...prevData, projects: newProjects };
+    });
+  }, [setResumeData]);
+
+  const removeProjectDescriptionPoint = useCallback((projectIndex: number, pointIndex: number) => {
+    setResumeData(prevData => {
+      const newProjects = [...(prevData.projects || [])];
+      const newDescription = newProjects[projectIndex].description.filter((_, i) => i !== pointIndex);
+      // Ensure at least one empty point remains
+      newProjects[projectIndex] = { 
+        ...newProjects[projectIndex], 
+        description: newDescription.length > 0 ? newDescription : [""] 
+      };
+      return { ...prevData, projects: newProjects };
+    });
+  }, [setResumeData]);
+
+  const handleProjectDescriptionKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>, projectIndex: number, pointIndex: number) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      addProjectDescriptionPoint(projectIndex);
+    }
+  }, [addProjectDescriptionPoint]);
   
   const handleCertificationChange = useCallback((index: number, field: string, value: string) => {
     setResumeData(prevData => {
@@ -584,26 +681,68 @@ export function ResumeBuilder({
     'skills': (
       <AccordionItem value="skills" key="skills">
         <AccordionTrigger className="text-lg font-semibold"><Wrench className="mr-3 h-5 w-5 text-primary accordion-icon"/>Skills</AccordionTrigger>
-        <AccordionContent className="pt-2">
-            <div className="relative">
-                <Label htmlFor="skills">Skills (comma-separated)</Label>
-                <Textarea 
-                  id="skills" 
-                  value={skillsInputValue} 
-                  onChange={(e) => handleSkillsChange(e.target.value)}
-                  onBlur={(e) => handleSkillsBlur(e.target.value)}
-                  onKeyDown={handleSkillsKeyDown}
-                  className="pr-10"
-                  placeholder="e.g., JavaScript, React, Node.js, Python"
+        <AccordionContent className="pt-2 space-y-4">
+          {(Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object'
+            ? resumeData.skills as import('@/lib/types/resume-types').SkillCategory[]
+            : [] as import('@/lib/types/resume-types').SkillCategory[]
+          ).map((skillCat, catIndex) => (
+            <div key={skillCat.id} className="p-4 border rounded-lg space-y-3 relative bg-background/50 transition-colors hover:border-primary/50">
+              <div>
+                <Label>Category Name</Label>
+                <Input 
+                  value={skillCat.category} 
+                  onChange={(e) => handleSkillCategoryChange(catIndex, 'category', e.target.value)}
+                  placeholder="e.g., Programming Languages, Frameworks, Tools"
                 />
-                 <div className="absolute bottom-1.5 right-1.5 flex flex-col gap-1">
-                    {SpeechRecognition && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground transition-colors hover:text-primary" onClick={() => toggleListening('skills')}>
-                            {isListening === 'skills' ? <Mic className={cn("h-4 w-4 text-primary animate-pulse-mic")} /> : <Mic className="h-4 w-4" />}
+              </div>
+              <div>
+                <Label>Skills</Label>
+                <div className="space-y-2">
+                  {(skillCat.items || [""]).map((item, itemIndex) => (
+                    <div key={itemIndex} className="flex items-center gap-2">
+                      <Input 
+                        value={item} 
+                        onChange={(e) => handleSkillItemChange(catIndex, itemIndex, e.target.value)}
+                        placeholder="e.g., JavaScript, React, Python"
+                        className="flex-1"
+                      />
+                      {skillCat.items.length > 1 && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground transition-colors hover:text-destructive" 
+                          onClick={() => removeSkillItem(catIndex, itemIndex)}
+                        >
+                          <X className="h-4 w-4" />
                         </Button>
-                    )}
+                      )}
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => addSkillItem(catIndex)}
+                    className="mt-2"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4"/>Add Skill
+                  </Button>
                 </div>
+              </div>
+              {(Array.isArray(resumeData.skills) && resumeData.skills.length > 1) && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="absolute top-2 right-2 text-muted-foreground transition-colors hover:text-destructive" 
+                  onClick={() => removeSkillCategory(catIndex)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
+          ))}
+          <Button variant="outline" onClick={addSkillCategory} className="transition-transform hover:scale-105">
+            <PlusCircle className="mr-2"/>Add Skill Category
+          </Button>
         </AccordionContent>
       </AccordionItem>
     ),
@@ -695,15 +834,39 @@ export function ResumeBuilder({
           {resumeData.projects?.map((proj, index) => (
             <div key={proj.id} className="p-4 border rounded-lg space-y-4 relative bg-background/50 transition-colors hover:border-primary/50">
               <div><Label>Project Name</Label><Input value={proj.name} onChange={(e) => handleProjectChange(index, "name", e.target.value)} /></div>
-              <div className="relative">
-                <Label>Description</Label>
-                <Textarea value={proj.description} onChange={(e) => handleProjectChange(index, "description", e.target.value)} rows={3} placeholder="Describe your project..." className="pr-10" />
-                <div className="absolute bottom-1.5 right-1.5 flex flex-col gap-1">
-                    {SpeechRecognition && (
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground transition-colors hover:text-primary" onClick={() => toggleListening(`project-${index}`)}>
-                            {isListening === `project-${index}` ? <Mic className={cn("h-4 w-4 text-primary animate-pulse-mic")} /> : <Mic className="h-4 w-4" />}
+              <div>
+                <Label>Description (Bullet Points)</Label>
+                <div className="space-y-2">
+                  {(Array.isArray(proj.description) ? proj.description : (proj.description ? [proj.description as string] : [""])).map((point, pointIndex) => (
+                    <div key={pointIndex} className="flex items-start gap-2">
+                      <span className="text-sm text-muted-foreground mt-2">•</span>
+                      <Input 
+                        value={point} 
+                        onChange={(e) => handleProjectDescriptionPointChange(index, pointIndex, e.target.value)}
+                        onKeyDown={(e) => handleProjectDescriptionKeyDown(e, index, pointIndex)}
+                        placeholder={pointIndex === 0 ? "Describe your project... (Press Enter to add more points)" : "Add another point... (Press Enter for more)"}
+                        className="flex-1"
+                      />
+                      {Array.isArray(proj.description) && proj.description.length > 1 && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground transition-colors hover:text-destructive" 
+                          onClick={() => removeProjectDescriptionPoint(index, pointIndex)}
+                        >
+                          <X className="h-4 w-4" />
                         </Button>
-                    )}
+                      )}
+                    </div>
+                  ))}
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => addProjectDescriptionPoint(index)}
+                    className="mt-2"
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4"/>Add Point
+                  </Button>
                 </div>
               </div>
               <div><Label>Demo Link</Label><Input value={proj.link} onChange={(e) => handleProjectChange(index, "link", e.target.value)} /></div>
@@ -883,7 +1046,7 @@ export function ResumeBuilder({
         </AccordionContent>
       </AccordionItem>
     ),
-  }), [skillsInputValue, jobDescription, isListening, isLoading, atsResult, SpeechRecognition, handlePersonalInfoChange, handleSummaryChange, handleEducationChange, handleExperienceChange, handleSkillsChange, handleSkillsBlur, handleSkillsKeyDown, handleProjectChange, handleCertificationChange, handleAwardChange, handleVolunteerChange, handleLanguageChange, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, addCertification, removeCertification, addAward, removeAward, addVolunteer, removeVolunteer, addLanguage, removeLanguage, toggleListening, handleScore, setJobDescription, resumeData.personalInfo, resumeData.summary, resumeData.education, resumeData.experience, resumeData.projects, resumeData.certifications, resumeData.awards, resumeData.volunteerExperience, resumeData.languages]);
+  }), [jobDescription, isListening, isLoading, atsResult, SpeechRecognition, handlePersonalInfoChange, handleSummaryChange, handleEducationChange, handleExperienceChange, handleSkillCategoryChange, handleSkillItemChange, addSkillCategory, removeSkillCategory, addSkillItem, removeSkillItem, handleProjectChange, handleProjectDescriptionPointChange, addProjectDescriptionPoint, removeProjectDescriptionPoint, handleProjectDescriptionKeyDown, handleCertificationChange, handleAwardChange, handleVolunteerChange, handleLanguageChange, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, addCertification, removeCertification, addAward, removeAward, addVolunteer, removeVolunteer, addLanguage, removeLanguage, toggleListening, handleScore, setJobDescription, resumeData.personalInfo, resumeData.summary, resumeData.education, resumeData.experience, resumeData.skills, resumeData.projects, resumeData.certifications, resumeData.awards, resumeData.volunteerExperience, resumeData.languages]);
 
   // Create draggable sections based on current order
   const draggableSections: DraggableResumeSection[] = useMemo(() => {

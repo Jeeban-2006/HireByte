@@ -50,7 +50,14 @@ export function extractTextFromResume(resume: Resume): string {
   if (resume.projects && resume.projects.length > 0) {
     parts.push("\n## Projects\n");
     resume.projects.forEach(proj => {
-      parts.push(`- ${proj.name}: ${proj.description}`);
+      parts.push(`- ${proj.name}`);
+      if (proj.description && proj.description.length > 0) {
+        proj.description.forEach(point => {
+          if (point.trim()) {
+            parts.push(`  • ${point}`);
+          }
+        });
+      }
       if (proj.link) parts.push(`  Link: ${proj.link}`);
     });
   }

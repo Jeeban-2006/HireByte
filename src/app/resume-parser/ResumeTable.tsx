@@ -95,7 +95,7 @@ export const ResumeTable = ({ resume }: { resume: Resume }) => {
             {projects.map((proj, idx) => (
               <Fragment key={idx}>
                 <TableRow label="Name" value={proj.name} />
-                <TableRow label="Description" value={proj.description} />
+                <TableRow label="Description" value={Array.isArray(proj.description) ? proj.description.filter(p => p.trim()).join(' • ') : proj.description} />
                 <TableRow 
                   label="Link" 
                   value={proj.link || ""} 

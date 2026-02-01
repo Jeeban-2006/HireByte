@@ -214,7 +214,11 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
         });
       }
 
-      if (resumeData.skills && resumeData.skills.length > 0) {
+      const skillCategories = Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object'
+        ? resumeData.skills as import('@/lib/types/resume-types').SkillCategory[]
+        : [];
+
+      if (skillCategories.length > 0 && skillCategories.some(cat => cat.category && cat.items && cat.items.some(item => item.trim()))) {
         if (yPos > 270) {
           pdf.addPage();
           yPos = 15;
@@ -224,14 +228,24 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
         pdf.text('SKILLS', margin, yPos);
         yPos += baseSpacing;
         pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        const skillsText = resumeData.skills.filter(s => s).join(', ');
-        const skillsLines = pdf.splitTextToSize(skillsText, contentWidth);
-        skillsLines.forEach((line: string) => {
-          pdf.text(line, margin, yPos);
-          yPos += 5;
+        
+        skillCategories.forEach((category) => {
+          if (category.category && category.items && category.items.some(item => item.trim())) {
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(`${category.category}:`, margin, yPos);
+            yPos += 5;
+            
+            pdf.setFont('helvetica', 'normal');
+            const skillsText = category.items.filter(item => item.trim()).join(', ');
+            const skillsLines = pdf.splitTextToSize(skillsText, contentWidth);
+            skillsLines.forEach((line: string) => {
+              pdf.text(line, margin, yPos);
+              yPos += 5;
+            });
+            yPos += 2;
+          }
         });
-        yPos += sectionGap;
+        yPos += sectionGap - 2;
       }
 
       const fileName = `${resumeData.personalInfo.name || 'Resume'}_Resume.pdf`;
@@ -383,7 +397,16 @@ const scrollToTop = () => {
                 </>
               )}
             </div>
-            <p className="mt-0 text-muted-foreground/90 text-xs print:text-black">{proj.description}</p>
+            {proj.description && (Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter(point => point.trim()).length > 0 && (
+              <ul className="mt-0 space-y-0.5 list-none pl-0">
+                {(Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter(point => point.trim()).map((point, idx) => (
+                  <li key={idx} className="text-muted-foreground/90 text-xs print:text-black flex items-start gap-1">
+                    <span className="select-none">•</span>
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         ));
       
@@ -465,16 +488,22 @@ const scrollToTop = () => {
         ));
       
       case 'skills':
-        return resumeData.skills && resumeData.skills.length > 0 ? (
+        const skillCategories = Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object'
+          ? resumeData.skills as import('@/lib/types/resume-types').SkillCategory[]
+          : [];
+        
+        return skillCategories.length > 0 ? (
           <section key="skills" className="mb-4 md:mb-6">
             <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 border-b-2 border-primary pb-1">Skills</h2>
-            <div className="flex flex-wrap gap-2 screen-skills-display">
-              {resumeData.skills.map((skill) => (
-                skill && <span key={skill} className="bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full transition-colors hover:bg-primary/20">{skill}</span>
-              ))}
-            </div>
-            <div className="hidden print-skills-display">
-              <p className="text-muted-foreground/90">{resumeData.skills.join(", ")}</p>
+            <div className="space-y-1">
+              {skillCategories.map((category) => category.category && category.items && category.items.some(item => item.trim()) ? (
+                <p key={category.id} className="text-xs">
+                  <span className="font-semibold text-foreground">{category.category}: </span>
+                  <span className="text-muted-foreground/90 print:text-black">
+                    {category.items.filter(item => item.trim()).join(', ')}
+                  </span>
+                </p>
+              ) : null)}
             </div>
           </section>
         ) : null;
