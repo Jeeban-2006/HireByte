@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import type { Resume } from "@/lib/types/resume-types";
 import { Download, Mail, Phone, Linkedin, Globe, MapPin, ExternalLink, Link as LinkIcon, Github, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils/general-utils";
-import { ResumeDownloadButton } from "@/components/resume/ResumeDownloadButton";
 import { useState, useEffect } from "react";
 import { ArrowUp } from "lucide-react";
 
@@ -44,15 +43,7 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
 
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-      const sectionCount = [
-        resumeData.summary,
-        resumeData.experience?.length,
-        resumeData.education?.length,
-        resumeData.projects?.length,
-        resumeData.skills?.length,
-        resumeData.certifications?.length,
-      ].filter(Boolean).length;
-
+      const sectionCount = sections.length;
       const baseSpacing = sectionCount > 4 ? 5 : 7;
       const sectionGap = sectionCount > 4 ? 6 : 8;
       
@@ -70,6 +61,14 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
         return textWidth;
       };
 
+      const checkPageBreak = (requiredSpace: number = 20) => {
+        if (yPos + requiredSpace > 270) {
+          pdf.addPage();
+          yPos = 15;
+        }
+      };
+
+      // Header
       const nameFontSize = sectionCount < 3 ? 24 : 20;
       pdf.setFontSize(nameFontSize);
       pdf.setFont('helvetica', 'bold');
@@ -114,138 +113,346 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
         yPos += 2;
       }
 
-      if (resumeData.summary) {
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('PROFESSIONAL SUMMARY', margin, yPos);
-        yPos += baseSpacing;
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(10);
-        const summaryLines = pdf.splitTextToSize(resumeData.summary, contentWidth);
-        summaryLines.forEach((line: string) => {
-          pdf.text(line, margin, yPos);
-          yPos += 5;
-        });
-        yPos += sectionGap;
-      }
-
-      if (resumeData.experience && resumeData.experience.length > 0) {
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('WORK EXPERIENCE', margin, yPos);
-        yPos += baseSpacing;
-
-        const expCount = resumeData.experience.length;
-        const bulletLimit = expCount > 2 ? 2 : 3;
-
-        resumeData.experience.forEach((exp, index) => {
-          if (yPos > 270) {
-            pdf.addPage();
-            yPos = 15;
-          }
-          
-          pdf.setFontSize(10);
+      // Render sections in order
+      for (const sectionId of sections) {
+        
+        if (sectionId === 'summary' && resumeData.summary) {
+          checkPageBreak();
+          pdf.setFontSize(11);
           pdf.setFont('helvetica', 'bold');
-          pdf.text(exp.jobTitle || '', margin, yPos);
+          pdf.text('PROFESSIONAL SUMMARY', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
           pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(9);
-          const dateText = `${exp.startDate || ''} - ${exp.endDate || ''}`;
-          const dateWidth = pdf.getTextWidth(dateText);
-          pdf.text(dateText, pageWidth - margin - dateWidth, yPos);
-          yPos += 5;
+          pdf.setFontSize(10);
+          const summaryLines = pdf.splitTextToSize(resumeData.summary, contentWidth);
+          summaryLines.forEach((line: string) => {
+            checkPageBreak(5);
+            pdf.text(line, margin, yPos);
+            yPos += 5;
+          });
+          yPos += sectionGap;
+        }
+        else if (sectionId === 'experience' && resumeData.experience?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('WORK EXPERIENCE', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
 
-          pdf.setFont('helvetica', 'italic');
-          pdf.text(exp.company || '', margin, yPos);
-          if (exp.location) {
-            const locWidth = pdf.getTextWidth(exp.location);
-            pdf.text(exp.location, pageWidth - margin - locWidth, yPos);
+          resumeData.experience.forEach((exp, index) => {
+            checkPageBreak(20);
+            
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(exp.jobTitle || '', margin, yPos);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            const dateText = `${exp.startDate || ''} - ${exp.endDate || ''}`;
+            const dateWidth = pdf.getTextWidth(dateText);
+            pdf.text(dateText, pageWidth - margin - dateWidth, yPos);
+            yPos += 5;
+
+            pdf.setFont('helvetica', 'italic');
+            pdf.text(exp.company || '', margin, yPos);
+            if (exp.location) {
+              const locWidth = pdf.getTextWidth(exp.location);
+              pdf.text(exp.location, pageWidth - margin - locWidth, yPos);
+            }
+            yPos += 5;
+
+            pdf.setFont('helvetica', 'normal');
+            if (exp.description) {
+              const bullets = exp.description.split('\n').filter(line => line.trim()).slice(0, 3);
+              bullets.forEach((bullet) => {
+                checkPageBreak(5);
+                const cleanBullet = bullet.replace(/^- /, '');
+                const bulletLines = pdf.splitTextToSize(`• ${cleanBullet}`, contentWidth - 3);
+                bulletLines.forEach((line: string) => {
+                  pdf.text(line, margin + 3, yPos);
+                  yPos += 5;
+                });
+              });
+            }
+            yPos += index < resumeData.experience.length - 1 ? 5 : sectionGap;
+          });
+        }
+        else if (sectionId === 'education' && resumeData.education?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('EDUCATION', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
+
+          resumeData.education.forEach((edu, index) => {
+            checkPageBreak(15);
+            
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(edu.degree || '', margin, yPos);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            const dateWidth = pdf.getTextWidth(edu.graduationDate || '');
+            pdf.text(edu.graduationDate || '', pageWidth - margin - dateWidth, yPos);
+            yPos += 5;
+
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'italic');
+            pdf.text(edu.school || '', margin, yPos);
+            if (edu.location) {
+              const locWidth = pdf.getTextWidth(edu.location);
+              pdf.text(edu.location, pageWidth - margin - locWidth, yPos);
+            }
+            yPos += index < resumeData.education.length - 1 ? 6 : sectionGap;
+          });
+        }
+        else if (sectionId === 'projects' && resumeData.projects?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('PROJECTS', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
+
+          resumeData.projects.forEach((proj, index) => {
+            checkPageBreak(15);
+            
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(proj.name || '', margin, yPos);
+            yPos += 5;
+
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            if (proj.description) {
+              const descriptions = Array.isArray(proj.description) ? proj.description : [proj.description as string];
+              descriptions.filter((desc: string) => desc.trim()).forEach((desc: string) => {
+                checkPageBreak(5);
+                const bulletLines = pdf.splitTextToSize(`• ${desc}`, contentWidth - 3);
+                bulletLines.forEach((line: string) => {
+                  pdf.text(line, margin + 3, yPos);
+                  yPos += 5;
+                });
+              });
+            }
+            yPos += index < resumeData.projects.length - 1 ? 5 : sectionGap;
+          });
+        }
+        else if (sectionId === 'skills') {
+          const skillCategories = Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object'
+            ? resumeData.skills as import('@/lib/types/resume-types').SkillCategory[]
+            : [];
+
+          if (skillCategories.length > 0 && skillCategories.some(cat => cat.category && cat.items?.some(item => item.trim()))) {
+            checkPageBreak();
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text('SKILLS', margin, yPos);
+            yPos += 1;
+            pdf.setLineWidth(0.5);
+            pdf.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += baseSpacing;
+            pdf.setFontSize(10);
+            
+            skillCategories.forEach((category) => {
+              if (category.category && category.items?.some(item => item.trim())) {
+                checkPageBreak(5);
+                pdf.setFont('helvetica', 'bold');
+                pdf.text(`${category.category}:`, margin, yPos);
+                yPos += 5;
+                
+                pdf.setFont('helvetica', 'normal');
+                const skillsText = category.items.filter(item => item.trim()).join(', ');
+                const skillsLines = pdf.splitTextToSize(skillsText, contentWidth);
+                skillsLines.forEach((line: string) => {
+                  checkPageBreak(5);
+                  pdf.text(line, margin, yPos);
+                  yPos += 5;
+                });
+                yPos += 2;
+              }
+            });
+            yPos += sectionGap - 2;
           }
-          yPos += 5;
+        }
+        else if (sectionId === 'certifications' && resumeData.certifications?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('CERTIFICATIONS', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
 
-          pdf.setFont('helvetica', 'normal');
-          if (exp.description) {
-            const bullets = exp.description.split('\n').filter(line => line.trim());
-            bullets.slice(0, bulletLimit).forEach((bullet) => {
-              const cleanBullet = bullet.replace(/^- /, '');
-              const bulletLines = pdf.splitTextToSize(`• ${cleanBullet}`, contentWidth - 3);
-              bulletLines.forEach((line: string) => {
-                if (yPos > 280) {
-                  pdf.addPage();
-                  yPos = 15;
-                }
-                pdf.text(line, margin + 3, yPos);
+          resumeData.certifications.forEach((cert, index) => {
+            checkPageBreak(10);
+            
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(cert.name || '', margin, yPos);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            if (cert.date) {
+              const dateWidth = pdf.getTextWidth(cert.date);
+              pdf.text(cert.date, pageWidth - margin - dateWidth, yPos);
+            }
+            yPos += 5;
+
+            pdf.setFont('helvetica', 'italic');
+            pdf.text(cert.authority || '', margin, yPos);
+            yPos += index < resumeData.certifications.length - 1 ? 6 : sectionGap;
+          });
+        }
+        else if (sectionId === 'awards' && resumeData.awards?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('AWARDS', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
+
+          resumeData.awards.forEach((award, index) => {
+            checkPageBreak(5);
+            
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`• ${award.name || ''}`, margin + 3, yPos);
+            yPos += index < resumeData.awards.length - 1 ? 5 : sectionGap;
+          });
+        }
+        else if (sectionId === 'volunteer' && resumeData.volunteerExperience?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('VOLUNTEER EXPERIENCE', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
+
+          resumeData.volunteerExperience.forEach((vol, index) => {
+            checkPageBreak(15);
+            
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(vol.role || '', margin, yPos);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(9);
+            if (vol.dates) {
+              const dateWidth = pdf.getTextWidth(vol.dates);
+              pdf.text(vol.dates, pageWidth - margin - dateWidth, yPos);
+            }
+            yPos += 5;
+
+            pdf.setFont('helvetica', 'italic');
+            pdf.text(vol.organization || '', margin, yPos);
+            yPos += 5;
+
+            pdf.setFont('helvetica', 'normal');
+            if (vol.description) {
+              const descLines = pdf.splitTextToSize(vol.description, contentWidth);
+              descLines.forEach((line: string) => {
+                checkPageBreak(5);
+                pdf.text(line, margin, yPos);
                 yPos += 5;
               });
-            });
-          }
-          yPos += index < expCount - 1 ? 5 : sectionGap;
-        });
-      }
-
-      if (resumeData.education && resumeData.education.length > 0) {
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('EDUCATION', margin, yPos);
-        yPos += baseSpacing;
-
-        resumeData.education.forEach((edu, index) => {
-          if (yPos > 270) {
-            pdf.addPage();
-            yPos = 15;
-          }
-          
-          pdf.setFontSize(10);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(edu.degree || '', margin, yPos);
-          pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(9);
-          const dateWidth = pdf.getTextWidth(edu.graduationDate || '');
-          pdf.text(edu.graduationDate || '', pageWidth - margin - dateWidth, yPos);
-          yPos += 5;
-
-          pdf.setFontSize(9);
-          pdf.setFont('helvetica', 'italic');
-          pdf.text(edu.school || '', margin, yPos);
-          if (edu.location) {
-            const locWidth = pdf.getTextWidth(edu.location);
-            pdf.text(edu.location, pageWidth - margin - locWidth, yPos);
-          }
-          yPos += index < resumeData.education.length - 1 ? 6 : sectionGap;
-        });
-      }
-
-      const skillCategories = Array.isArray(resumeData.skills) && resumeData.skills.length > 0 && typeof resumeData.skills[0] === 'object'
-        ? resumeData.skills as import('@/lib/types/resume-types').SkillCategory[]
-        : [];
-
-      if (skillCategories.length > 0 && skillCategories.some(cat => cat.category && cat.items && cat.items.some(item => item.trim()))) {
-        if (yPos > 270) {
-          pdf.addPage();
-          yPos = 15;
+            }
+            yPos += index < resumeData.volunteerExperience.length - 1 ? 5 : sectionGap;
+          });
         }
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('SKILLS', margin, yPos);
-        yPos += baseSpacing;
-        pdf.setFontSize(10);
-        
-        skillCategories.forEach((category) => {
-          if (category.category && category.items && category.items.some(item => item.trim())) {
-            pdf.setFont('helvetica', 'bold');
-            pdf.text(`${category.category}:`, margin, yPos);
+        else if (sectionId === 'languages' && resumeData.languages?.length > 0) {
+          checkPageBreak();
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text('LANGUAGES', margin, yPos);
+          yPos += 1;
+          pdf.setLineWidth(0.5);
+          pdf.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += baseSpacing;
+
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(10);
+          const langText = resumeData.languages.map(lang => `${lang.name}: ${lang.proficiency}`).join(', ');
+          const langLines = pdf.splitTextToSize(langText, contentWidth);
+          langLines.forEach((line: string) => {
+            checkPageBreak(5);
+            pdf.text(line, margin, yPos);
             yPos += 5;
+          });
+          yPos += sectionGap;
+        }
+        else if (sectionId.startsWith('custom-')) {
+          const customSectionId = sectionId.replace('custom-', '');
+          const customSection = resumeData.customSections?.find(s => s.id === customSectionId);
+          
+
+          if (customSection && customSection.items?.length > 0) {
+            checkPageBreak();
             
-            pdf.setFont('helvetica', 'normal');
-            const skillsText = category.items.filter(item => item.trim()).join(', ');
-            const skillsLines = pdf.splitTextToSize(skillsText, contentWidth);
-            skillsLines.forEach((line: string) => {
-              pdf.text(line, margin, yPos);
-              yPos += 5;
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'bold');
+            pdf.text(customSection.title.toUpperCase(), margin, yPos);
+            yPos += 1;
+            pdf.setLineWidth(0.5);
+            pdf.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += baseSpacing;
+            
+            customSection.items.forEach((item, itemIndex) => {
+              checkPageBreak(10);
+              
+              if (customSection.type === 'categorical' && customSection.fields) {
+                pdf.setFontSize(10);
+                customSection.fields.forEach((field) => {
+                  if (item[field]) {
+                    pdf.setFont('helvetica', 'bold');
+                    const fieldLabel = `${field}:`;
+                    pdf.text(fieldLabel, margin, yPos);
+                    
+                    pdf.setFont('helvetica', 'normal');
+                    const fieldValue = item[field] as string;
+                    const valueX = margin + pdf.getTextWidth(fieldLabel) + 2;
+                    const valueLines = pdf.splitTextToSize(fieldValue, contentWidth - (valueX - margin));
+                    valueLines.forEach((line: string, lineIndex: number) => {
+                      if (lineIndex > 0) {
+                        yPos += 5;
+                        pdf.text(line, margin, yPos);
+                      } else {
+                        pdf.text(line, valueX, yPos);
+                      }
+                    });
+                    yPos += 5;
+                  }
+                });
+                yPos += itemIndex < customSection.items.length - 1 ? 2 : 0;
+              } else {
+                // Points format
+                pdf.setFont('helvetica', 'normal');
+                pdf.setFontSize(10);
+                const content = item.content as string || '';
+                const bulletLines = pdf.splitTextToSize(`• ${content}`, contentWidth - 3);
+                bulletLines.forEach((line: string) => {
+                  checkPageBreak(5);
+                  pdf.text(line, margin + 3, yPos);
+                  yPos += 5;
+                });
+              }
             });
-            yPos += 2;
+            yPos += sectionGap;
           }
-        });
-        yPos += sectionGap - 2;
+        }
       }
 
       const fileName = `${resumeData.personalInfo.name || 'Resume'}_Resume.pdf`;
@@ -397,9 +604,9 @@ const scrollToTop = () => {
                 </>
               )}
             </div>
-            {proj.description && (Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter(point => point.trim()).length > 0 && (
+            {proj.description && (Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter((point: string) => point.trim()).length > 0 && (
               <ul className="mt-0 space-y-0.5 list-none pl-0">
-                {(Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter(point => point.trim()).map((point, idx) => (
+                {(Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter((point: string) => point.trim()).map((point: string, idx: number) => (
                   <li key={idx} className="text-muted-foreground/90 text-xs print:text-black flex items-start gap-1">
                     <span className="select-none">•</span>
                     <span>{point}</span>
@@ -521,6 +728,41 @@ const scrollToTop = () => {
         ) : null;
       
       default:
+        // Handle custom sections
+        if (sectionId.startsWith('custom-')) {
+          const customSectionId = sectionId.replace('custom-', '');
+          const customSection = resumeData.customSections?.find(s => s.id === customSectionId);
+          
+          if (customSection && (customSection.items || []).length > 0) {
+            return (
+              <section key={sectionId} className="mb-4 md:mb-6">
+                <h2 className="text-sm font-bold uppercase tracking-widest text-primary mb-2 border-b-2 border-primary pb-1">
+                  {customSection.title}
+                </h2>
+                <div className="space-y-2">
+                  {(customSection.items || []).map((item, index) => (
+                    <div key={index} className="mb-3 text-xs">
+                      {customSection.type === 'categorical' && customSection.fields ? (
+                        <div className="space-y-1">
+                          {(customSection.fields || []).map((field, fieldIndex) => (
+                            item[field] && (
+                              <div key={fieldIndex} className="flex items-start gap-2">
+                                <span className="font-semibold text-foreground min-w-[80px]">{field}:</span>
+                                <span className="text-muted-foreground flex-1">{item[field]}</span>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">• {item.content}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+          }
+        }
         return null;
     }
   };
@@ -571,13 +813,22 @@ const scrollToTop = () => {
 
     <div
       id="resume-preview-content"
-      className="bg-card text-card-foreground p-2 md:p-3 rounded-lg print:p-0 print:m-0 print:rounded-none print:bg-white print:text-black print:shadow-none md:shadow-2xl md:shadow-primary/10 md:transition-shadow md:duration-300 md:hover:shadow-primary/20 overflow-hidden"
+      className="bg-card text-card-foreground p-2 md:p-3 rounded-lg print:p-0 print:m-0 print:rounded-none print:bg-white print:text-black print:shadow-none md:shadow-2xl md:shadow-primary/10 md:transition-shadow md:duration-300 md:hover:shadow-primary/20"
       style={{
-        maxHeight: pageCount > 1 ? '1123px' : 'none',
-        position: 'relative'
+        overflow: 'hidden',
+        position: 'relative',
+        ...(pageCount > 1 ? {
+          maxHeight: '1123px', // A4 height equivalent
+          clipPath: 'inset(0)'
+        } : {})
       }}
     >
-      <header className="text-center mb-1 print:mb-1">
+      <div style={pageCount > 1 ? {
+        transform: `translateY(-${(currentPage - 1) * 1123}px)`,
+        transition: 'transform 0.3s ease-in-out',
+        willChange: 'transform'
+      } : undefined}>
+        <header className="text-center mb-1 print:mb-1">
         <h1 className="text-base md:text-lg font-bold font-headline tracking-tight print:text-base print:mb-0">
           {resumeData.personalInfo.name}
         </h1>
@@ -657,32 +908,25 @@ const scrollToTop = () => {
         </div>
       </header>
 
-      <main 
-        className="text-xs print:text-xs leading-tight print:leading-tight relative"
-        style={pageCount > 1 ? {
-          transform: `translateY(-${(currentPage - 1) * 1123}px)`,
-          transition: 'transform 0.3s ease-in-out'
-        } : undefined}
-      >
-        {sections.map((sectionId, index) => (
-          <React.Fragment key={sectionId}>
-            {renderSectionById(sectionId)}
-            {/* Add visual page break indicator if content is getting long */}
-            {index === Math.floor(sections.length / 2) && pageCount > 1 && (
-              <div className="my-4 border-t-2 border-dashed border-slate-300 dark:border-slate-700 relative print:hidden">
-                <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-slate-500 dark:text-slate-400">
-                  Page Break
-                </span>
-              </div>
-            )}
-          </React.Fragment>
-        ))}
-      </main>
+        <main className="text-xs print:text-xs leading-tight print:leading-tight">
+          {sections.map((sectionId) => (
+            <React.Fragment key={sectionId}>
+              {renderSectionById(sectionId)}
+            </React.Fragment>
+          ))}
+        </main>
+      </div>
     </div>
 
     <div className="p-4 border-t no-print flex gap-2">
       <div className="flex-1">
-        <ResumeDownloadButton resumeData={resumeData} sectionOrder={sectionOrder} />
+        <Button 
+          onClick={handlePrint}
+          className="w-full download-pdf-btn bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Download PDF
+        </Button>
       </div>
     </div>
 

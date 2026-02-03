@@ -9,10 +9,10 @@ import { motion, AnimatePresence } from "framer-motion";
 interface NavigationProps {
   onScrollToATS: () => void;
   onScrollToBuilder: () => void;
-  onOpenAIDialog: () => void;
+  onScrollToUpdates: () => void;
 }
 
-export function Navigation({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }: NavigationProps) {
+export function Navigation({ onScrollToATS, onScrollToBuilder, onScrollToUpdates }: NavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleMobileMenuClick = (action: () => void) => {
@@ -45,12 +45,6 @@ export function Navigation({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }:
           {/* Center Links - Desktop */}
           <div className="hidden lg:flex items-center justify-center gap-8 flex-1">
             <button 
-              onClick={onOpenAIDialog}
-              className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Create with AI
-            </button>
-            <button 
               onClick={onScrollToATS}
               className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
@@ -72,6 +66,12 @@ export function Navigation({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }:
               className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               Contact Us
+            </button>
+            <button 
+              onClick={onScrollToUpdates}
+              className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+            >
+              Next Up
             </button>
           </div>
 
@@ -114,12 +114,6 @@ export function Navigation({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }:
           >
             <div className="container mx-auto px-4 py-4 space-y-2">
               <button
-                onClick={() => handleMobileMenuClick(onOpenAIDialog)}
-                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Create with AI
-              </button>
-              <button
                 onClick={() => handleMobileMenuClick(onScrollToATS)}
                 className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
@@ -141,6 +135,12 @@ export function Navigation({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }:
                 className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
               >
                 Contact Us
+              </button>
+              <button
+                onClick={() => handleMobileMenuClick(onScrollToUpdates)}
+                className="w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors"
+              >
+                Next Up
               </button>
               <Button
                 size="sm"

@@ -63,6 +63,19 @@ export interface Language {
     proficiency: string;
 }
 
+export interface CustomSectionItem {
+  id: string;
+  [key: string]: string; // Dynamic fields based on section type
+}
+
+export interface CustomSection {
+  id: string;
+  title: string;
+  type: 'points' | 'categorical'; // points = bullet points, categorical = key-value pairs
+  items: CustomSectionItem[];
+  fields?: string[]; // For categorical type, defines the field names (e.g., ['Language', 'Proficiency'])
+}
+
 export interface SkillCategory {
   id: string;
   category: string;
@@ -80,6 +93,7 @@ export interface Resume {
   awards: Award[];
   volunteerExperience: VolunteerExperience[];
   languages: Language[];
+  customSections?: CustomSection[];
   sectionOrder?: string[];
   hiddenSections?: string[];
 }
