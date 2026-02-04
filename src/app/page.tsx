@@ -1,37 +1,33 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Navigation } from '@/components/layout/Navigation';
 import { SplashScreen } from '@/components/layout/SplashScreen';
 import { HeroSection } from '@/components/layout/HeroSection';
-import { ATSTestingSection } from '@/components/layout/ATSTestingSection';
-import { ResumeBuilderSection, type ResumeBuilderSectionRef } from '@/components/resume/ResumeBuilderSection';
-import { AIResumeDialog } from '@/components/ai/AIResumeDialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { FeaturesSection } from '@/components/layout/FeaturesSection';
+import { UpcomingUpdatesSection } from '@/components/layout/UpcomingUpdatesSection';
+import { Footer } from '@/components/layout/Footer';
+import type { ResumeBuilderSectionRef } from '@/components/resume/ResumeBuilderSection';
+
+// Lazy load heavy components
+const ATSTestingSection = lazy(() => import('@/components/layout/ATSTestingSection').then(mod => ({ default: mod.ATSTestingSection })));
+const ResumeBuilderSection = lazy(() => import('@/components/resume/ResumeBuilderSection').then(mod => ({ default: mod.ResumeBuilderSection })));
 
 
 export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
-  const [showAIDialog, setShowAIDialog] = useState(false);
-  const [showComingSoon, setShowComingSoon] = useState(false);
   const atsTestingRef = useRef<HTMLDivElement>(null);
   const resumeBuilderRef = useRef<HTMLDivElement>(null);
+  const upcomingUpdatesRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const resumeBuilderSectionRef = useRef<ResumeBuilderSectionRef>(null);
 
   useEffect(() => {
-    // Show splash for 3 seconds then fade out
+    // Show splash for 1.5 seconds then fade out for faster initial render
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 3000);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -44,8 +40,8 @@ export default function Home() {
 
   const scrollToATS = () => scrollToSection(atsTestingRef);
   const scrollToBuilder = () => scrollToSection(resumeBuilderRef);
+  const scrollToUpdates = () => scrollToSection(upcomingUpdatesRef);
   const scrollToTop = () => scrollToSection(heroRef);
-  const openAIDialog = () => setShowComingSoon(true);
 
   const handleAutofillFromATS = async (resumeText: string) => {
     if (resumeBuilderSectionRef.current?.handleAutofill) {
@@ -63,7 +59,7 @@ export default function Home() {
         <Navigation 
           onScrollToATS={scrollToATS}
           onScrollToBuilder={scrollToBuilder}
-          onOpenAIDialog={openAIDialog}
+          onScrollToUpdates={scrollToUpdates}
         />
         
         <main className="min-h-screen" itemScope itemType="https://schema.org/WebApplication">
@@ -75,44 +71,40 @@ export default function Home() {
             <HeroSection 
               onScrollToATS={scrollToATS}
               onScrollToBuilder={scrollToBuilder}
-              onOpenAIDialog={openAIDialog}
+              onScrollToUpdates={scrollToUpdates}
             />
           </div>
           
-          <section ref={atsTestingRef} className="section-transition" aria-labelledby="ats-testing-heading">
-            <h2 id="ats-testing-heading" className="sr-only">ATS Resume Testing and Analysis</h2>
-            <ATSTestingSection 
-              onScrollToBuilder={scrollToBuilder}
-              onAutofillResume={handleAutofillFromATS}
-            />
-          </section>
+          <FeaturesSection />
           
-          <section ref={resumeBuilderRef} className="section-transition" aria-labelledby="resume-builder-heading">
-            <h2 id="resume-builder-heading" className="sr-only">Professional Resume Builder</h2>
-            <ResumeBuilderSection 
-              ref={resumeBuilderSectionRef}
-              onBackToTop={scrollToTop}
-            />
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>}>
+            <section ref={atsTestingRef} className="section-transition" aria-labelledby="ats-testing-heading">
+              <h2 id="ats-testing-heading" className="sr-only">ATS Resume Testing and Analysis</h2>
+              <ATSTestingSection 
+                onScrollToBuilder={scrollToBuilder}
+                onAutofillResume={handleAutofillFromATS}
+              />
+            </section>
+          </Suspense>
+          
+          <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>}>
+            <section ref={resumeBuilderRef} className="section-transition" aria-labelledby="resume-builder-heading">
+              <h2 id="resume-builder-heading" className="sr-only">Professional Resume Builder</h2>
+              <ResumeBuilderSection 
+                ref={resumeBuilderSectionRef}
+                onBackToTop={scrollToTop}
+              />
+            </section>
+          </Suspense>
+          
+          <section ref={upcomingUpdatesRef} className="section-transition" aria-labelledby="next-up-heading">
+            <h2 id="next-up-heading" className="sr-only">Next Up - Upcoming Features</h2>
+            <UpcomingUpdatesSection />
           </section>
         </main>
+        
+        <Footer />
       </div>
-      
-      <AIResumeDialog 
-        open={showAIDialog}
-        onOpenChange={setShowAIDialog}
-      />
-
-      <AlertDialog open={showComingSoon} onOpenChange={setShowComingSoon}>
-        <AlertDialogContent className="border-primary/50">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl">Coming Soon! 🚀</AlertDialogTitle>
-            <AlertDialogDescription className="text-base mt-4">
-              The AI Resume Creation feature is coming soon. We're working hard to bring you an amazing experience to create professional resumes through conversation with our AI assistant.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogAction className="mt-4">Got it!</AlertDialogAction>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

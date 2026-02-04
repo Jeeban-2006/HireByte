@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   generateEtags: true,
   
+  // Optimize production builds
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  
   // Security and SEO headers
   async headers() {
     return [

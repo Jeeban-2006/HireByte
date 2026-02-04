@@ -1,7 +1,7 @@
 
 "use client";
 
-import type { Resume } from "@/lib/types/resume-types";
+import type { Resume, AtsScoreResumeOutput, CustomSection, CustomSectionItem } from "@/lib/types/resume-types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,9 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AtsScoreDisplay } from "@/components/ai/ATSScoreDisplay";
-import { Bot, BrainCircuit, Loader2, PlusCircle, Trash2, User, GraduationCap, Briefcase, Wrench, Mic, FolderKanban, Award, Languages, Handshake, Ribbon, X } from "lucide-react";
+import { Bot, BrainCircuit, Loader2, PlusCircle, Trash2, User, GraduationCap, Briefcase, Wrench, Mic, FolderKanban, Award, Languages, Handshake, Ribbon, X, Plus, ListPlus, List } from "lucide-react";
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import type { AtsScoreResumeOutput } from "@/lib/types/resume-types";
 import { cn } from "@/lib/utils/general-utils";
 import { useToast } from "@/hooks/use-toast";
 import { DraggableResumeBuilder, DraggableResumeSection } from "@/components/resume/DraggableResumeBuilder";
@@ -597,6 +596,135 @@ export function ResumeBuilder({
     });
   }, [setResumeData]);
 
+  // Custom Section Handlers
+  const [showAddCustomSection, setShowAddCustomSection] = useState(false);
+  const [newCustomSectionTitle, setNewCustomSectionTitle] = useState('');
+  const [newCustomSectionType, setNewCustomSectionType] = useState<'points' | 'categorical'>('categorical');
+  const [newCustomSectionFields, setNewCustomSectionFields] = useState<string[]>(['Field 1', 'Field 2']);
+
+  const addCustomSection = useCallback(() => {
+    if (!newCustomSectionTitle.trim()) {
+      toast({
+        title: "Section title required",
+        description: "Please enter a title for your custom section.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newSection: CustomSection = {
+      id: `${Date.now()}`,
+      title: newCustomSectionTitle,
+      type: newCustomSectionType,
+      items: [],
+      fields: newCustomSectionType === 'categorical' ? newCustomSectionFields : undefined
+    };
+
+    setResumeData(prevData => ({
+      ...prevData,
+      customSections: [...(prevData.customSections || []), newSection]
+    }));
+
+    // Add to section order
+    if (setSectionOrder && sectionOrder) {
+      setSectionOrder([...sectionOrder, `custom-${newSection.id}`]);
+    } else {
+      console.warn('setSectionOrder or sectionOrder is missing!', { setSectionOrder: !!setSectionOrder, sectionOrder });
+    }
+
+    // Reset form
+    setNewCustomSectionTitle('');
+    setNewCustomSectionType('categorical');
+    setNewCustomSectionFields(['Field 1', 'Field 2']);
+    setShowAddCustomSection(false);
+
+    toast({
+      title: "Custom section added",
+      description: `"${newSection.title}" has been added to your resume.`,
+    });
+  }, [newCustomSectionTitle, newCustomSectionType, newCustomSectionFields, setResumeData, setSectionOrder, sectionOrder, toast]);
+
+  const addCustomSectionItem = useCallback((sectionId: string) => {
+    setResumeData(prevData => {
+      const sections = prevData.customSections || [];
+      const section = sections.find(s => s.id === sectionId);
+      if (!section) return prevData;
+
+      const newItem: CustomSectionItem = { id: `item-${Date.now()}` };
+      if (section.type === 'categorical' && section.fields) {
+        section.fields.forEach(field => {
+          newItem[field] = '';
+        });
+      } else {
+        newItem.content = '';
+      }
+
+      const updatedSections = sections.map(s => 
+        s.id === sectionId ? { ...s, items: [...s.items, newItem] } : s
+      );
+
+      return { ...prevData, customSections: updatedSections };
+    });
+  }, [setResumeData]);
+
+  const updateCustomSectionItem = useCallback((sectionId: string, itemIndex: number, field: string, value: string) => {
+    setResumeData(prevData => {
+      const sections = prevData.customSections || [];
+      const updatedSections = sections.map(section => {
+        if (section.id === sectionId) {
+          const items = [...section.items];
+          items[itemIndex] = { ...items[itemIndex], [field]: value };
+          return { ...section, items };
+        }
+        return section;
+      });
+      return { ...prevData, customSections: updatedSections };
+    });
+  }, [setResumeData]);
+
+  const deleteCustomSectionItem = useCallback((sectionId: string, itemIndex: number) => {
+    setResumeData(prevData => {
+      const sections = prevData.customSections || [];
+      const updatedSections = sections.map(section => {
+        if (section.id === sectionId) {
+          return { ...section, items: section.items.filter((_, i) => i !== itemIndex) };
+        }
+        return section;
+      });
+      return { ...prevData, customSections: updatedSections };
+    });
+  }, [setResumeData]);
+
+  const deleteCustomSection = useCallback((sectionId: string) => {
+    setResumeData(prevData => ({
+      ...prevData,
+      customSections: (prevData.customSections || []).filter(s => s.id !== sectionId)
+    }));
+
+    // Remove from section order
+    if (setSectionOrder && sectionOrder) {
+      setSectionOrder(sectionOrder.filter(id => id !== `custom-${sectionId}`));
+    }
+  }, [setResumeData, setSectionOrder, sectionOrder]);
+
+  const updateCustomSectionField = useCallback((index: number, value: string) => {
+    setNewCustomSectionFields(prev => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  }, []);
+
+  const addCustomSectionField = useCallback(() => {
+    setNewCustomSectionFields(prev => [...prev, `Field ${prev.length + 1}`]);
+  }, []);
+
+  const removeCustomSectionField = useCallback((index: number) => {
+    if (newCustomSectionFields.length > 1) {
+      setNewCustomSectionFields(prev => prev.filter((_, i) => i !== index));
+    }
+  }, [newCustomSectionFields.length]);
+
   // Toggle section visibility
   const toggleSectionVisibility = useCallback((sectionType: string) => {
     setHiddenSections(prev => {
@@ -1046,8 +1174,92 @@ export function ResumeBuilder({
         </AccordionContent>
       </AccordionItem>
     ),
-  }), [jobDescription, isListening, isLoading, atsResult, SpeechRecognition, handlePersonalInfoChange, handleSummaryChange, handleEducationChange, handleExperienceChange, handleSkillCategoryChange, handleSkillItemChange, addSkillCategory, removeSkillCategory, addSkillItem, removeSkillItem, handleProjectChange, handleProjectDescriptionPointChange, addProjectDescriptionPoint, removeProjectDescriptionPoint, handleProjectDescriptionKeyDown, handleCertificationChange, handleAwardChange, handleVolunteerChange, handleLanguageChange, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, addCertification, removeCertification, addAward, removeAward, addVolunteer, removeVolunteer, addLanguage, removeLanguage, toggleListening, handleScore, setJobDescription, resumeData.personalInfo, resumeData.summary, resumeData.education, resumeData.experience, resumeData.skills, resumeData.projects, resumeData.certifications, resumeData.awards, resumeData.volunteerExperience, resumeData.languages]);
+  }), [jobDescription, isListening, isLoading, atsResult, SpeechRecognition, handlePersonalInfoChange, handleSummaryChange, handleEducationChange, handleExperienceChange, handleSkillCategoryChange, handleSkillItemChange, addSkillCategory, removeSkillCategory, addSkillItem, removeSkillItem, handleProjectChange, handleProjectDescriptionPointChange, addProjectDescriptionPoint, removeProjectDescriptionPoint, handleProjectDescriptionKeyDown, handleCertificationChange, handleAwardChange, handleVolunteerChange, handleLanguageChange, addEducation, removeEducation, addExperience, removeExperience, addProject, removeProject, addCertification, removeCertification, addAward, removeAward, addVolunteer, removeVolunteer, addLanguage, removeLanguage, toggleListening, handleScore, setJobDescription, resumeData.personalInfo, resumeData.summary, resumeData.education, resumeData.experience, resumeData.skills, resumeData.projects, resumeData.certifications, resumeData.awards, resumeData.volunteerExperience, resumeData.languages, resumeData.customSections, addCustomSectionItem, updateCustomSectionItem, deleteCustomSectionItem, deleteCustomSection, toggleSectionVisibility]);
 
+  // Create components for custom sections separately
+  const customSectionComponents = useMemo(() => {
+    const components: Record<string, React.ReactNode> = {};
+    (resumeData.customSections || []).forEach(customSection => {
+      components[`custom-${customSection.id}`] = (
+        <AccordionItem value={`custom-${customSection.id}`} key={`custom-${customSection.id}`}>
+          <AccordionTrigger className="text-lg font-semibold group">
+            <div className="flex items-center flex-1">
+              {customSection.type === 'points' ? (
+                <List className="mr-3 h-5 w-5 text-primary accordion-icon"/>
+              ) : (
+                <ListPlus className="mr-3 h-5 w-5 text-primary accordion-icon"/>
+              )}
+              {customSection.title}
+            </div>
+            <div
+              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity mr-2 flex items-center justify-center cursor-pointer hover:bg-accent rounded-md"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteCustomSection(customSection.id);
+              }}
+            >
+              <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4 pt-2">
+            {(customSection.items || []).map((item, index) => (
+              <div key={item.id} className="p-4 border rounded-lg space-y-4 relative bg-background/50 transition-colors hover:border-primary/50">
+                {customSection.type === 'categorical' && customSection.fields ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(customSection.fields || []).map(field => (
+                      <div key={field}>
+                        <Label>{field}</Label>
+                        <Input 
+                          value={item[field] || ''} 
+                          onChange={(e) => updateCustomSectionItem(customSection.id, index, field, e.target.value)} 
+                          placeholder={`Enter ${field.toLowerCase()}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <Label>Description</Label>
+                    <Textarea 
+                      value={item.content || ''} 
+                      onChange={(e) => updateCustomSectionItem(customSection.id, index, 'content', e.target.value)} 
+                      placeholder="Enter bullet point..."
+                      rows={3}
+                    />
+                  </div>
+                )}
+                {(customSection.items || []).length > 1 && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute top-2 right-2 text-muted-foreground transition-colors hover:text-destructive" 
+                    onClick={() => deleteCustomSectionItem(customSection.id, index)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button 
+              variant="outline" 
+              onClick={() => addCustomSectionItem(customSection.id)} 
+              className="transition-transform hover:scale-105"
+            >
+              <PlusCircle className="mr-2"/>
+              Add {customSection.type === 'points' ? 'Point' : 'Item'}
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+      );
+    });
+    return components;
+  }, [resumeData.customSections, addCustomSectionItem, updateCustomSectionItem, deleteCustomSectionItem, deleteCustomSection]);
+
+  // Merge all section components
+  const allSectionComponents = useMemo(() => ({
+    ...sectionComponents,
+    ...customSectionComponents
+  }), [sectionComponents, customSectionComponents]);
   // Create draggable sections based on current order
   const draggableSections: DraggableResumeSection[] = useMemo(() => {
     return currentSectionOrder
@@ -1055,10 +1267,10 @@ export function ResumeBuilder({
       .map(sectionType => ({
         id: sectionType,
         type: sectionType,
-        content: sectionComponents[sectionType] || null,
+        content: allSectionComponents[sectionType] || null,
       }))
       .filter(section => section.content !== null);
-  }, [currentSectionOrder, sectionComponents, hiddenSections]);
+  }, [currentSectionOrder, allSectionComponents, hiddenSections]);
 
   return (
     <Card className="shadow-2xl shadow-primary/10 transition-shadow duration-300 hover:shadow-primary/20">
@@ -1133,6 +1345,133 @@ export function ResumeBuilder({
             </div>
           </div>
         )}
+
+        {/* Add Custom Section */}
+        <div className="mt-6">
+          {!showAddCustomSection ? (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowAddCustomSection(true)}
+              className="w-full border-dashed border-2 transition-all hover:border-primary hover:bg-primary/5"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Custom Section
+            </Button>
+          ) : (
+            <div className="p-4 bg-muted/30 rounded-lg border border-muted space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-sm">Create Custom Section</h3>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => {
+                    setShowAddCustomSection(false);
+                    setNewCustomSectionTitle('');
+                    setNewCustomSectionType('categorical');
+                    setNewCustomSectionFields(['Field 1', 'Field 2']);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div>
+                <Label>Section Title</Label>
+                <Input 
+                  value={newCustomSectionTitle}
+                  onChange={(e) => setNewCustomSectionTitle(e.target.value)}
+                  placeholder="e.g., Publications, Hobbies, etc."
+                />
+              </div>
+
+              <div>
+                <Label>Section Type</Label>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={newCustomSectionType === 'categorical' ? 'default' : 'outline'}
+                    onClick={() => setNewCustomSectionType('categorical')}
+                    className="justify-start"
+                  >
+                    <ListPlus className="mr-2 h-4 w-4" />
+                    Categorical (Key-Value)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={newCustomSectionType === 'points' ? 'default' : 'outline'}
+                    onClick={() => setNewCustomSectionType('points')}
+                    className="justify-start"
+                  >
+                    <List className="mr-2 h-4 w-4" />
+                    Points (Bullet List)
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {newCustomSectionType === 'categorical' 
+                    ? 'For items with multiple fields (e.g., Language: English, Proficiency: Native)'
+                    : 'For simple bullet point descriptions'}
+                </p>
+              </div>
+
+              {newCustomSectionType === 'categorical' && (
+                <div>
+                  <Label>Field Names</Label>
+                  <div className="space-y-2 mt-2">
+                    {newCustomSectionFields.map((field, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input 
+                          value={field}
+                          onChange={(e) => updateCustomSectionField(index, e.target.value)}
+                          placeholder={`Field ${index + 1}`}
+                        />
+                        {newCustomSectionFields.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeCustomSectionField(index)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addCustomSectionField}
+                      className="w-full"
+                    >
+                      <Plus className="mr-2 h-3 w-3" />
+                      Add Field
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <Button 
+                  onClick={addCustomSection}
+                  className="flex-1"
+                >
+                  Create Section
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddCustomSection(false);
+                    setNewCustomSectionTitle('');
+                    setNewCustomSectionType('categorical');
+                    setNewCustomSectionFields(['Field 1', 'Field 2']);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -7,7 +7,6 @@ import { useIntersectionObserver } from '@/hooks/use-intersection-observer';
 import { ResumeBuilder } from '@/components/resume/ResumeBuilder';
 import { useToast } from '@/hooks/use-toast';
 import { FileText, Download } from 'lucide-react';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { initialResumeData } from '@/lib/templates/resume-template-builder';
@@ -61,6 +60,34 @@ export const ResumeBuilderSection = forwardRef<ResumeBuilderSectionRef, ResumeBu
     'languages',
     'job-description'
   ]);
+
+  // Sync sectionOrder with custom sections whenever resumeData changes
+  useEffect(() => {
+    if (resumeData.customSections && resumeData.customSections.length > 0) {
+      const customSectionIds = resumeData.customSections.map(cs => `custom-${cs.id}`);
+      setSectionOrder(prevOrder => {
+        // Remove old custom sections that no longer exist
+        const baseOrder = prevOrder.filter(id => !id.startsWith('custom-'));
+        // Add all current custom sections
+        const allCustomIds = new Set(customSectionIds);
+        const existingCustom = prevOrder.filter(id => id.startsWith('custom-') && allCustomIds.has(id));
+        const newCustom = customSectionIds.filter(id => !prevOrder.includes(id));
+        
+        // Insert new custom sections before job-description
+        const jobDescIndex = baseOrder.indexOf('job-description');
+        if (jobDescIndex !== -1) {
+          return [
+            ...baseOrder.slice(0, jobDescIndex),
+            ...existingCustom,
+            ...newCustom,
+            'job-description'
+          ];
+        } else {
+          return [...baseOrder, ...existingCustom, ...newCustom];
+        }
+      });
+    }
+  }, [resumeData.customSections]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [atsResult, setAtsResult] = useState<AtsScoreResumeOutput | null>(null);
@@ -282,8 +309,6 @@ ${resumeData.skills.join(', ')}
               )}
             </div>
           </div>
-          
-          <Footer />
         </div>
       </div>
     </section>

@@ -8,10 +8,10 @@ import { motion } from "framer-motion";
 interface HeroSectionProps {
   onScrollToATS: () => void;
   onScrollToBuilder: () => void;
-  onOpenAIDialog: () => void;
+  onScrollToUpdates: () => void;
 }
 
-export function HeroSection({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }: HeroSectionProps) {
+export function HeroSection({ onScrollToATS, onScrollToBuilder, onScrollToUpdates }: HeroSectionProps) {
 
   return (
     <section 
@@ -27,16 +27,12 @@ export function HeroSection({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }
           
           {/* Left Column - Content */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
           >
             {/* New Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-            >
+            <div>
               <Badge 
                 variant="outline" 
                 className="mb-6 inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border-blue-500/30 text-blue-400 hover:bg-blue-500/20"
@@ -44,13 +40,10 @@ export function HeroSection({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }
                 <Sparkles className="h-3 w-3" />
                 New · AI resume builder
               </Badge>
-            </motion.div>
+            </div>
 
             {/* Heading */}
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.8 }}
+            <h1
               className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-[1.1] text-slate-900 dark:text-slate-50"
             >
               Ship ATS‑proof resumes
@@ -58,24 +51,18 @@ export function HeroSection({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }
               <span className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-600 bg-clip-text text-transparent">
                 with an AI resume studio
               </span>
-            </motion.h1>
+            </h1>
 
             {/* Subtext */}
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.8 }}
+            <p
               className="text-lg text-slate-600 dark:text-slate-300 mb-8 leading-relaxed max-w-xl"
             >
               Create professional resumes that pass ATS screening and land interviews. 
               Built by engineers, powered by AI, trusted by job seekers worldwide.
-            </motion.p>
+            </p>
 
             {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
+            <div
               className="flex flex-col sm:flex-row gap-4 mb-10"
             >
               <Button
@@ -93,27 +80,20 @@ export function HeroSection({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }
               >
                 Run ATS check
               </Button>
-            </motion.div>
+            </div>
 
             {/* Trust Badges */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
-            >
+            <div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mb-4">Trusted by</div>
               <div className="flex flex-wrap items-center gap-6 text-slate-600 dark:text-slate-500">
                 <div className="font-semibold text-sm">Y Combinator</div>
                 <div className="font-semibold text-sm">Product Hunt</div>
                 <div className="font-semibold text-sm">Google for Startups</div>
               </div>
-            </motion.div>
+            </div>
 
             {/* Metrics */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1, duration: 0.8 }}
+            <div
               className="grid grid-cols-3 gap-4 mt-10"
             >
               <motion.div 
@@ -164,7 +144,7 @@ export function HeroSection({ onScrollToATS, onScrollToBuilder, onOpenAIDialog }
                 </div>
                 <div className="text-xs text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">callbacks</div>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* Right Column - App Preview */}
