@@ -5,7 +5,6 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Navigation } from '@/components/layout/Navigation';
 import { SplashScreen } from '@/components/layout/SplashScreen';
 import { HeroSection } from '@/components/layout/HeroSection';
-import { FeaturesSection } from '@/components/layout/FeaturesSection';
 import { UpcomingUpdatesSection } from '@/components/layout/UpcomingUpdatesSection';
 import { Footer } from '@/components/layout/Footer';
 import type { ResumeBuilderSectionRef } from '@/components/resume/ResumeBuilderSection';
@@ -24,10 +23,10 @@ export default function Home() {
   const resumeBuilderSectionRef = useRef<ResumeBuilderSectionRef>(null);
 
   useEffect(() => {
-    // Show splash for 1.5 seconds then fade out for faster initial render
+    // Show splash for 3 seconds to allow full typing animation to complete
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1500);
+    }, 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -74,8 +73,6 @@ export default function Home() {
               onScrollToUpdates={scrollToUpdates}
             />
           </div>
-          
-          <FeaturesSection />
           
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>}>
             <section ref={atsTestingRef} className="section-transition" aria-labelledby="ats-testing-heading">
