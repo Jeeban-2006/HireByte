@@ -24,10 +24,10 @@ export default function Home() {
   const resumeBuilderSectionRef = useRef<ResumeBuilderSectionRef>(null);
 
   useEffect(() => {
-    // Show splash for 1.5 seconds then fade out for faster initial render
+    // Show splash for 3 seconds to allow full typing animation to complete
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 1500);
+    }, 3000);
     return () => clearTimeout(timer);
   }, []);
 
