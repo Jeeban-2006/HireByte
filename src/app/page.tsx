@@ -5,7 +5,6 @@ import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { Navigation } from '@/components/layout/Navigation';
 import { SplashScreen } from '@/components/layout/SplashScreen';
 import { HeroSection } from '@/components/layout/HeroSection';
-import { FeaturesSection } from '@/components/layout/FeaturesSection';
 import { UpcomingUpdatesSection } from '@/components/layout/UpcomingUpdatesSection';
 import { Footer } from '@/components/layout/Footer';
 import type { ResumeBuilderSectionRef } from '@/components/resume/ResumeBuilderSection';
@@ -74,8 +73,6 @@ export default function Home() {
               onScrollToUpdates={scrollToUpdates}
             />
           </div>
-          
-          <FeaturesSection />
           
           <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>}>
             <section ref={atsTestingRef} className="section-transition" aria-labelledby="ats-testing-heading">

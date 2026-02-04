@@ -229,7 +229,15 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
             
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'bold');
+            const projNameWidth = pdf.getTextWidth(proj.name || '');
             pdf.text(proj.name || '', margin, yPos);
+            
+            // Add link if exists
+            if (proj.link) {
+              const linkText = ' [Link]';
+              const linkX = margin + projNameWidth + 2;
+              addLink(linkText, proj.link.startsWith('http') ? proj.link : `https://${proj.link}`, linkX, yPos, 10);
+            }
             yPos += 5;
 
             pdf.setFont('helvetica', 'normal');
@@ -300,7 +308,16 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
             
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'bold');
+            const certNameWidth = pdf.getTextWidth(cert.name || '');
             pdf.text(cert.name || '', margin, yPos);
+            
+            // Add link if exists
+            if (cert.link) {
+              const linkText = ' [Link]';
+              const linkX = margin + certNameWidth + 2;
+              addLink(linkText, cert.link.startsWith('http') ? cert.link : `https://${cert.link}`, linkX, yPos, 10);
+            }
+            
             pdf.setFont('helvetica', 'normal');
             pdf.setFontSize(9);
             if (cert.date) {
@@ -329,7 +346,16 @@ export function ResumePreview({ resumeData, sectionOrder }: ResumePreviewProps) 
             
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`• ${award.name || ''}`, margin + 3, yPos);
+            const awardText = `• ${award.name || ''}`;
+            const awardWidth = pdf.getTextWidth(awardText);
+            pdf.text(awardText, margin + 3, yPos);
+            
+            // Add link if exists
+            if (award.link) {
+              const linkText = ' [Link]';
+              const linkX = margin + 3 + awardWidth + 2;
+              addLink(linkText, award.link.startsWith('http') ? award.link : `https://${award.link}`, linkX, yPos, 10);
+            }
             yPos += index < resumeData.awards.length - 1 ? 5 : sectionGap;
           });
         }
@@ -594,14 +620,9 @@ const scrollToTop = () => {
             <div className="grid grid-cols-[1fr_auto] items-baseline gap-1">
               <h3 className="font-bold text-xs">{proj.name}</h3>
               {proj.link && (
-                <>
-                  {/* Screen: Interactive link with icon */}
-                  <a href={ensureUrlScheme(proj.link)} target="_blank" rel="noopener noreferrer" className="screen:inline print:hidden text-xs text-primary hover:underline flex items-center gap-0.5 transition-colors whitespace-nowrap">
-                    View <ExternalLink className="h-2.5 w-2.5" />
-                  </a>
-                  {/* Print: Clean text only, no URL rendered */}
-                  <span className="screen:hidden print:inline text-xs text-gray-700 whitespace-nowrap">View</span>
-                </>
+                <a href={ensureUrlScheme(proj.link)} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline flex items-center gap-0.5 transition-colors whitespace-nowrap print:text-blue-600">
+                  Link <ExternalLink className="h-2.5 w-2.5" />
+                </a>
               )}
             </div>
             {proj.description && (Array.isArray(proj.description) ? proj.description : [proj.description as string]).filter((point: string) => point.trim()).length > 0 && (
@@ -648,14 +669,9 @@ const scrollToTop = () => {
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-xs print:text-black">{cert.name}</h3>
                 {cert.link && (
-                  <>
-                    {/* Screen: Interactive link */}
-                    <a href={ensureUrlScheme(cert.link)} target="_blank" rel="noopener noreferrer" className="screen:inline print:hidden text-primary hover:underline flex items-center gap-1 transition-colors text-xs">
-                      <LinkIcon className="h-3 w-3" /> View
-                    </a>
-                    {/* Print: Clean text only */}
-                    <span className="screen:hidden print:inline text-xs text-gray-700">- View</span>
-                  </>
+                  <a href={ensureUrlScheme(cert.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 transition-colors text-xs print:text-blue-600">
+                    <LinkIcon className="h-3 w-3" /> Link
+                  </a>
                 )}
               </div>
               <span className="text-xs text-muted-foreground print:text-gray-700 whitespace-nowrap">{cert.date}</span>
@@ -669,14 +685,9 @@ const scrollToTop = () => {
           <span key={award.id} className="flex items-center gap-2">
             <span className="print:text-black">{award.name}</span>
             {award.link && (
-              <>
-                {/* Screen: Interactive link */}
-                <a href={ensureUrlScheme(award.link)} target="_blank" rel="noopener noreferrer" className="screen:inline print:hidden text-primary hover:underline flex items-center gap-1 transition-colors text-xs">
-                  <LinkIcon className="h-3 w-3" /> View
-                </a>
-                {/* Print: Clean text only, no URL */}
-                <span className="screen:hidden print:inline text-xs text-gray-700">- View</span>
-              </>
+              <a href={ensureUrlScheme(award.link)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1 transition-colors text-xs print:text-blue-600">
+                <LinkIcon className="h-3 w-3" /> Link
+              </a>
             )}
           </span>
         ));
